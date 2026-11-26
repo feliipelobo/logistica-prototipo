@@ -682,3 +682,9 @@ main{min-height:calc(100vh - 60px - 58px)}
 .top.nav-hidden{transform:translateY(-100%);box-shadow:none}
 .top.nav-hidden .dd,.top.nav-hidden .um-dd{display:none!important}
 @media (prefers-reduced-motion:reduce){.top{transition:none}}
+
+/* ===== Cabeçalho das tabelas em azul Oxford ===== */
+.tbl th{background:var(--ox);color:rgba(255,255,255,.88);border-bottom:0;font-weight:600}
+.tbl th.sortable:hover{color:#fff;background:var(--ox-800)}
+.tbl th .sa{color:#8fd6a0}
+.tbl th.ck-c input{accent-color:var(--green)}
