@@ -1048,7 +1048,16 @@ S = load() || seed();
 store.set(KEY, JSON.stringify(S));
 if (new URLSearchParams(location.search).has('demo') && !me()) store.set(SKEY, 'u1');
 setInterval(clock, 15000);
-const onScroll = () => { const t = $('#top'); if (t) t.classList.toggle('scrolled', window.scrollY > 8); };
+let lastY = 0;
+const onScroll = () => {
+  const t = $('#top'); if (!t) return;
+  const y = Math.max(0, window.scrollY), um = $('#um');
+  t.classList.toggle('scrolled', y > 8);
+  if (y < 80 || (um && um.classList.contains('open'))) t.classList.remove('nav-hidden');
+  else if (y > lastY + 4) t.classList.add('nav-hidden');
+  else if (y < lastY - 4) t.classList.remove('nav-hidden');
+  if (Math.abs(y - lastY) > 4) lastY = y;
+};
 window.addEventListener('scroll', onScroll, { passive: true });
 boot();
 })();
