@@ -77,7 +77,7 @@ function seed() {
   const motoristas = [{ id: 'm1', nome: 'Carlos Griss', cpf: '123.456.789-01', telefone: '(13) 99811-2200', cnh: 'E', tipo: 'Próprio', status: 'Ativo' }];
   motoristas.forEach(m => Object.assign(m, cnhSeed()[m.id]));
   const veiculos = [{ id: 'v1', placa: 'ANS-4G47', modelo: 'Scania R450', tipo: 'Cavalo mecânico', proprietario: 'Frota própria' }];
-  const usuarios = [{ id: 'u1', nome: 'Leonardo Silva', email: 'leonardo@serafinitransportes.com.br', perfil: 'Supervisor', status: 'Ativo' }];
+  const usuarios = [{ id: 'u1', nome: 'Leonardo Silva', email: 'leonardo@serafinitransportes.com.br', perfil: 'Diretor / CEO', status: 'Ativo' }];
   const progs = [
     { id: 'p1', tipo: 'escala', data: dia(-1), clienteId: 'e1', lote: '25GX5587HR', vaga: 92, motoristaId: 'm1', placa: 'ANS-4G47',
       valorViagem: 180, valorMotorista: 70, qtdPrevista: 20, qtdViagens: 20, inicio: '15:45', fim: '22:00', status: 'Finalizada', ocorrencia: false, valorOcorrencia: 0 },
@@ -126,10 +126,10 @@ window.addEventListener('storage', e => { if (e.key === KEY) { S = load() || S; 
 const me = () => S.usuarios.find(u => u.id === store.get(SKEY));
 
 /* ---------------- Perfis de acesso ---------------- */
-const PERFIS = ['Supervisor', 'Administrador', 'Financeiro', 'Operação'];
-const ACESSO_TOTAL = ['Supervisor', 'Administrador'];
+const PERFIS = ['Diretor / CEO', 'Administrador', 'Financeiro', 'Operação'];
+const ACESSO_TOTAL = ['Diretor / CEO', 'Administrador'];
 const PERMISSOES = {
-  Supervisor: 'Acesso total · alimenta e controla todo o sistema',
+  'Diretor / CEO': 'Acesso total · alimenta e controla todo o sistema',
   Administrador: 'Acesso total',
   Financeiro: 'Pagamentos, abastecimentos e recebimentos',
   'Operação': 'Programação de escalas e serviços'
@@ -728,8 +728,8 @@ const cadastros = {
     log: (o, n) => `${n ? 'Empresa cadastrada' : 'Empresa atualizada'}: ${o.nome}`
   },
   usuarios: {
-    col: 'usuarios', group: 'Cadastros', title: 'Usuários', newText: 'Novo usuário', editText: 'Editar usuário', searchPh: 'por nome ou e-mail', desc: 'O supervisor alimenta e controla todo o sistema e pode incluir outras pessoas para ajudar, acompanhando tudo.',
-    summary: rs => [['Usuários', num(rs.length), 'users', 'Com acesso ao sistema'], ['Acesso total', num(rs.filter(u => ACESSO_TOTAL.includes(u.perfil)).length), 'lock', 'Supervisor e administradores'], ['Ativos', num(rs.filter(u => u.status !== 'Inativo').length), 'check', 'Podem entrar no sistema']],
+    col: 'usuarios', group: 'Cadastros', title: 'Usuários', newText: 'Novo usuário', editText: 'Editar usuário', searchPh: 'por nome ou e-mail', desc: 'O diretor (CEO) alimenta e controla todo o sistema e pode incluir outras pessoas para ajudar, acompanhando tudo.',
+    summary: rs => [['Usuários', num(rs.length), 'users', 'Com acesso ao sistema'], ['Acesso total', num(rs.filter(u => ACESSO_TOTAL.includes(u.perfil)).length), 'lock', 'Diretor e administradores'], ['Ativos', num(rs.filter(u => u.status !== 'Inativo').length), 'check', 'Podem entrar no sistema']],
     filter: { label: 'Perfil', get: u => u.perfil, options: PERFIS },
     cols: [{ label: 'Nome', sv: u => u.nome, render: u => person(u.nome) + (me() && u.id === me().id ? ' <span class="badge b-run" style="margin-left:6px">Você</span>' : '') }, { label: 'E-mail', k: 'email' }, { label: 'Perfil', render: u => badge(u.perfil, ACESSO_TOTAL.includes(u.perfil) ? 'run' : 'no') }, { label: 'Permissões', render: u => esc(PERMISSOES[u.perfil] || '—') }, { label: 'Status', render: u => badge(u.status || 'Ativo', u.status === 'Inativo' ? 'no' : 'ok') }],
     fields: [{ k: 'nome', label: 'Nome completo', req: 1, full: 1 }, { k: 'email', label: 'E-mail', type: 'email', req: 1, full: 1 }, { k: 'perfil', label: 'Perfil', type: 'select', req: 1, options: PERFIS }, { k: 'status', label: 'Status', type: 'select', req: 1, options: ['Ativo', 'Inativo'] }],
@@ -1017,6 +1017,7 @@ function toggleLive() {
 
 /* ---------------- Início ---------------- */
 S = load() || seed();
+S.usuarios.forEach(u => { if (u.perfil === 'Supervisor') u.perfil = 'Diretor / CEO'; });
 S.motoristas.forEach(m => { const c = cnhSeed()[m.id]; if (!m.cnhNum && c) Object.assign(m, c); });
 store.set(KEY, JSON.stringify(S));
 if (new URLSearchParams(location.search).has('demo') && !me()) store.set(SKEY, 'u1');
