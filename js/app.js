@@ -448,7 +448,8 @@ function heroHead(cfg, rows) {
   const and = rows.filter(r => r.status === 'Em andamento').length;
   const h = cfg.hero;
   return `<section class="hero">
-    <img class="hero-img" src="${h.img}" alt="${esc(h.alt)}">
+    <img class="hero-img" src="${h.img}" alt="${esc(h.alt)}"><span class="hero-bar"></span>
+    ${h.credit ? `<a class="hero-cr" href="${h.credit[1]}" target="_blank" rel="noopener">${esc(h.credit[0])}</a>` : ''}
     <div class="hero-in">
       <div class="hero-t">
         <h1 aria-label="${esc(cfg.title)}"><span class="h-l">${esc(h.t1)}</span><span class="h-b">${esc(h.t2)}</span></h1>
@@ -781,7 +782,8 @@ const progCfg = (tipo = 'escala') => ({
   beforeSave: o => { o.tipo = tipo; if (o.status === 'Finalizada' && !o.qtdViagens) o.qtdViagens = o.qtdPrevista; },
   log: (o, n) => `${n ? 'Nova programação' : 'Programação atualizada'}: lote ${o.lote} — ${nome('motoristas', o.motoristaId)}`,
   dayFilter: true,
-  hero: { img: 'img/porto-itapoa.jpg', alt: 'Navio porta-contêineres atracado no Porto Itapoá ao anoitecer', place: 'Porto Itapoá · SC', t1: 'Programar', t2: 'Escala' },
+  hero: { img: 'img/porto-itapoa.jpg', alt: 'Navio porta-contêineres da Maersk atracado no Porto Itapoá', place: 'Porto Itapoá · SC', t1: 'Programar', t2: 'Escala',
+    credit: ['Foto: Stanglavine / Wikimedia Commons · CC BY-SA 4.0', 'https://commons.wikimedia.org/wiki/File:Maersk_Lebu_in_Itapo%C3%A1,_Brazil,_2025.jpg'] },
   select: { label: 'Gerar imagem', run: rows => escalaImagem(tipo, rows) },
   detail: progDetail
 });
