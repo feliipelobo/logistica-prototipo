@@ -319,7 +319,7 @@ function renderShell() {
   const u = me();
   $('#top').innerHTML = `
     <button class="burger" id="burger" aria-label="Abrir menu">${ic('menu', 20)}</button>
-    <a class="brand" href="#/dashboard" aria-label="Serafini Transportes, ir para o início"><img src="img/logo-simbolo.png" alt=""><div class="wm"><b>SERAFINI</b><span>TRANSPORTES</span></div></a>
+    <a class="brand" href="#/escala" aria-label="Serafini Transportes, ir para a programação"><img src="img/logo-simbolo.png" alt=""><div class="wm"><b>SERAFINI</b><span>TRANSPORTES</span></div></a>
     <nav class="nav-l" id="navLinks" aria-label="Menu principal"></nav>
     <div class="top-r">
       <div class="nt" id="nt">
