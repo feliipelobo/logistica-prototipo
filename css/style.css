@@ -688,3 +688,6 @@ main{min-height:calc(100vh - 60px - 58px)}
 .tbl th.sortable:hover{color:#fff;background:var(--ox-800)}
 .tbl th .sa{color:#8fd6a0}
 .tbl th.ck-c input{accent-color:var(--green)}
+/* alinhamento dos títulos com os valores (seta só ocupa espaço quando a coluna está ordenada) */
+.tbl th .sa:empty{display:none}
+.tbl th.r .sa{margin-left:4px}
