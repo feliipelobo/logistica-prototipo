@@ -446,14 +446,19 @@ function bindSum() {
 function heroHead(cfg, rows) {
   const hoje = rows.filter(r => r.data === ymd(new Date()));
   const and = rows.filter(r => r.status === 'Em andamento').length;
+  const h = cfg.hero;
   return `<section class="hero">
-    <img class="hero-img" src="${cfg.hero.img}" alt="${esc(cfg.hero.alt)}">
-    <div class="hero-top"><div class="hero-k"><span><b>${num(hoje.length)}</b> ${hoje.length === 1 ? 'escala hoje' : 'escalas hoje'}</span><span><b>${num(and)}</b> em andamento</span></div><span class="hero-tag">${ic('pin', 13)}${esc(cfg.hero.place)}</span></div>
-    ${cfg.hero.credit ? `<a class="hero-cr" href="${cfg.hero.credit[1]}" target="_blank" rel="noopener">${esc(cfg.hero.credit[0])}</a>` : ''}
+    <img class="hero-img" src="${h.img}" alt="${esc(h.alt)}">
     <div class="hero-in">
-      <div class="hero-t"><nav class="crumb" aria-label="Você está em"><span>Início</span>${ic('chevR', 13)}<span>${cfg.group}</span>${ic('chevR', 13)}<b>${cfg.title}</b></nav>
-        <h1>${cfg.title}</h1><p>${cfg.desc}</p></div>
-      <div class="hero-a"><button class="btn btn-hero" id="novo">${ic('plus')}${cfg.newText}</button></div>
+      <div class="hero-t">
+        <h1 aria-label="${esc(cfg.title)}"><span class="h-l">${esc(h.t1)}</span><span class="h-b">${esc(h.t2)}</span></h1>
+        <i class="hero-ln"></i>
+        <p>${cfg.desc}</p>
+      </div>
+      <div class="hero-a">
+        <div class="hero-k"><span><b>${num(hoje.length)}</b> ${hoje.length === 1 ? 'escala hoje' : 'escalas hoje'}</span><span><b>${num(and)}</b> em andamento</span><span>${ic('pin', 13)}${esc(h.place)}</span></div>
+        <button class="btn btn-hero" id="novo">${ic('plus')}${cfg.newText}</button>
+      </div>
     </div></section>`;
 }
 const noteBox = h =>`<div class="note">${ic('info', 17)}<div>${h}</div></div>`;
@@ -466,8 +471,9 @@ function crud(cfg) {
   const sum = cfg.summary ? cfg.summary(all) : [];
   const fopts = cfg.filter ? (typeof cfg.filter.options === 'function' ? cfg.filter.options() : cfg.filter.options) : [];
   const selOn = !!cfg.select && ls.selMode;
-  $('#app').innerHTML = `<div class="${cfg.hero ? 'pg-c' : 'pg'}">
-    ${cfg.hero ? heroHead(cfg, all) : pageHead(cfg.group, cfg.title, cfg.desc, `<button class="btn btn-pri" id="novo">${ic('plus')}${cfg.newText}</button>`)}
+  $('#app').classList.toggle('has-hero', !!cfg.hero);
+  $('#app').innerHTML = `${cfg.hero ? heroHead(cfg, all) : ''}<div class="${cfg.hero ? 'pg-c' : 'pg'}">
+    ${cfg.hero ? '' : pageHead(cfg.group, cfg.title, cfg.desc, `<button class="btn btn-pri" id="novo">${ic('plus')}${cfg.newText}</button>`)}
     ${cfg.note ? noteBox(cfg.note) : ''}
     ${sumBlock(sum)}
     <div class="panel">
@@ -775,8 +781,7 @@ const progCfg = (tipo = 'escala') => ({
   beforeSave: o => { o.tipo = tipo; if (o.status === 'Finalizada' && !o.qtdViagens) o.qtdViagens = o.qtdPrevista; },
   log: (o, n) => `${n ? 'Nova programação' : 'Programação atualizada'}: lote ${o.lote} — ${nome('motoristas', o.motoristaId)}`,
   dayFilter: true,
-  hero: { img: 'img/porto-itapoa.jpg', alt: 'Navio porta-contêineres da Maersk atracado no Porto Itapoá', place: 'Porto Itapoá · SC',
-    credit: ['Foto: Stanglavine / Wikimedia Commons · CC BY-SA 4.0', 'https://commons.wikimedia.org/wiki/File:Maersk_Lebu_in_Itapo%C3%A1,_Brazil,_2025.jpg'] },
+  hero: { img: 'img/porto-itapoa.jpg', alt: 'Navio porta-contêineres atracado no Porto Itapoá ao anoitecer', place: 'Porto Itapoá · SC', t1: 'Programar', t2: 'Escala' },
   select: { label: 'Gerar imagem', run: rows => escalaImagem(tipo, rows) },
   detail: progDetail
 });
@@ -1191,6 +1196,7 @@ function render(fromChange) {
   const route = routes[r] ? r : 'dashboard';
   if (route !== 'tv' && document.body.classList.contains('tv')) tvStop();
   if (!fromChange) ls.key = null;
+  $('#app').classList.remove('has-hero');
   renderNav(route);
   const a = document.activeElement, caret = a && a.id === 'q' ? a.selectionStart : null;
   routes[route]();
