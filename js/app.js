@@ -345,7 +345,7 @@ function renderNav(route) {
   const simple = i => i === '-' ? '<div class="dd-sep"></div>' : `<a class="dd-s ${i[0] === route ? 'on' : ''}" href="#/${i[0]}">${i[1]}</a>`;
   $('#navLinks').innerHTML = NAV.map(it => it.r
     ? `<div class="nav-item ${on(it) ? 'active' : ''}"><a class="nav-link" href="#/${it.r}">${it.label}</a></div>`
-    : `<div class="nav-item ${on(it) ? 'active' : ''}"><button class="nav-link" type="button" aria-haspopup="true">${it.label}${ic('chev', 13, 'chev')}</button><div class="dd"><div class="dd-in">${it.items.map(simple).join('')}</div></div></div>`).join('');
+    : `<div class="nav-item ${on(it) ? 'active' : ''}"><button class="nav-link" type="button" aria-haspopup="true">${it.label}</button><div class="dd"><div class="dd-in">${it.items.map(simple).join('')}</div></div></div>`).join('');
   $$('#navLinks .dd-s').forEach(a => a.addEventListener('click', () => a.blur()));
   $('#mnav').innerHTML = `<div class="mnav-bg" data-close></div><div class="mnav-p"><div class="mnav-h"><div class="brand"><img src="img/logo-simbolo.png" alt="" style="width:32px;height:32px"><div class="wm"><b>SERAFINI</b><span>TRANSPORTES</span></div></div><button data-close aria-label="Fechar menu">${ic('x', 20)}</button></div>
     <div class="mnav-b">${NAV.map(it => it.r ? link([it.r, it.label, 'Visão geral e indicadores', it.icon]) : `<div class="mnav-g">${it.label}</div>${it.items.map(link).join('')}`).join('')}

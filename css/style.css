@@ -580,7 +580,7 @@ main{min-height:calc(100vh - 60px - 58px)}
 .top .nav-link{height:36px;padding:0 13px;border-radius:9px;border-bottom:0;gap:7px}
 .top .nav-link:hover,.top .nav-item:hover>.nav-link{background:rgba(255,255,255,.06)}
 .top .nav-item.active>.nav-link{background:rgba(255,255,255,.09);border-bottom:0;color:#fff;font-weight:600}
-.top .nav-item.active>.nav-link::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--green);flex:none}
+
 .top .dd{padding-top:12px}
 .top .dd-in{min-width:210px;padding:6px;border-radius:12px}
 .dd-s{display:block;padding:9px 12px;border-radius:8px;color:var(--ink);font-size:14px;font-weight:500;text-decoration:none;white-space:nowrap}
