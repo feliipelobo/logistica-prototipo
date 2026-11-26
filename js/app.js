@@ -59,7 +59,9 @@ const ICONS = {
   info: '<circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/>',
   menu: '<path d="M4 6h16M4 12h16M4 18h16"/>',
   building: '<rect x="4" y="2" width="16" height="20" rx="2"/><path d="M9 22v-4h6v4M8 6h.01M12 6h.01M16 6h.01M8 10h.01M12 10h.01M16 10h.01M8 14h.01M12 14h.01M16 14h.01"/>',
-  pie: '<path d="M21.2 15.9A10 10 0 1 1 8 2.8"/><path d="M22 12A10 10 0 0 0 12 2v10z"/>'
+  pie: '<path d="M21.2 15.9A10 10 0 1 1 8 2.8"/><path d="M22 12A10 10 0 0 0 12 2v10z"/>',
+  image: '<rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.1-3.1a2 2 0 0 0-2.8 0L6 21"/>',
+  share: '<circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.6 13.5 6.8 4M15.4 6.5l-6.8 4"/>'
 };
 const ic = (n, s = 16, c = '') => `<svg class="ic ${c}" width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICONS[n] || ''}</svg>`;
 
@@ -360,50 +362,183 @@ function profile() {
 }
 
 /* ---------------- Listagens (CRUD) ---------------- */
-let ls = { key: null, q: '', f: '', s: -1, d: 1 };
+let ls = { key: null, q: '', f: '', day: '', s: -1, d: 1, sel: new Set() };
 const cellTxt = (c, r) => c.render ? stripHtml(String(c.render(r))) : String(r[c.k] ?? '');
 function crud(cfg) {
-  if (ls.key !== cfg.title) ls = { key: cfg.title, q: '', f: '', s: -1, d: 1 };
+  if (ls.key !== cfg.title) ls = { key: cfg.title, q: '', f: '', day: '', s: -1, d: 1, sel: new Set() };
   const all = cfg.rows ? cfg.rows() : S[cfg.col];
+  ls.sel.forEach(id => { if (!all.some(r => r.id === id)) ls.sel.delete(id); });
   const sum = cfg.summary ? cfg.summary(all) : [];
   const fopts = cfg.filter ? (typeof cfg.filter.options === 'function' ? cfg.filter.options() : cfg.filter.options) : [];
+  const selOn = !!cfg.select;
   $('#app').innerHTML = `
     ${pageHead(cfg.group, cfg.title, cfg.desc, `<button class="btn btn-pri" id="novo">${ic('plus')}${cfg.newText}</button>`)}
     ${sum.length ? `<div class="stats">${sum.map(statCard).join('')}</div>` : ''}
     <div class="panel">
       <div class="toolbar">
         <div class="tb-l"><div class="search">${ic('search')}<input id="q" placeholder="Buscar ${cfg.searchPh || 'registros'}..." value="${esc(ls.q)}" aria-label="Buscar"></div>
+          ${cfg.dayFilter ? `<div class="day-f"><label for="day">Dia</label><input type="date" id="day" value="${esc(ls.day)}"><button class="btn btn-sec btn-sm" id="dayHoje" type="button">Hoje</button>${ls.day ? `<button class="ib" id="dayClr" type="button" title="Mostrar todos os dias" aria-label="Limpar dia">${ic('x', 15)}</button>` : ''}</div>` : ''}
           ${cfg.filter ? `<select id="flt" class="sel-sm" aria-label="Filtrar por ${cfg.filter.label}"><option value="">${cfg.filter.label}: todos</option>${fopts.map(o => `<option ${o === ls.f ? 'selected' : ''}>${esc(o)}</option>`).join('')}</select>` : ''}</div>
-        <div class="tb-r"><span class="count" id="cnt"></span><button class="btn btn-sec btn-sm" id="csv">${ic('download', 15)}Exportar CSV</button></div>
+        <div class="tb-r"><span class="count" id="cnt"></span><button class="btn btn-sec btn-sm" id="csv">${ic('download', 15)}Exportar CSV</button>
+          ${selOn ? `<button class="btn btn-pri btn-sm" id="selRun" disabled>${ic('image', 15)}<span id="selLbl">${cfg.select.label}</span></button>` : ''}</div>
       </div>
-      <div class="tscroll"><table class="tbl"><thead><tr>${cfg.cols.map((c, i) => `<th class="sortable ${c.r ? 'r' : ''}" data-s="${i}" title="Ordenar">${c.label}<span class="sa">${ls.s === i ? (ls.d > 0 ? '↑' : '↓') : ''}</span></th>`).join('')}<th class="act" aria-label="Ações"></th></tr></thead><tbody id="tb"></tbody></table></div>
-      <div class="tbl-foot"><span id="cnt2"></span><span>${cfg.detail ? 'Clique em uma linha para ver os detalhes' : 'Clique no título da coluna para ordenar'}</span></div>
+      ${selOn ? `<div class="selbar" id="selbar" hidden><span id="selTxt"></span><button class="lnk" id="selClr" type="button">Limpar seleção</button></div>` : ''}
+      <div class="tscroll"><table class="tbl"><thead><tr>${selOn ? `<th class="ck-c"><input type="checkbox" id="ckAll" aria-label="Selecionar todos"></th>` : ''}${cfg.cols.map((c, i) => `<th class="sortable ${c.r ? 'r' : ''}" data-s="${i}" title="Ordenar">${c.label}<span class="sa">${ls.s === i ? (ls.d > 0 ? '↑' : '↓') : ''}</span></th>`).join('')}<th class="act" aria-label="Ações"></th></tr></thead><tbody id="tb"></tbody></table></div>
+      <div class="tbl-foot"><span id="cnt2"></span><span>${selOn ? 'Marque as programações e clique em “' + cfg.select.label + '”' : cfg.detail ? 'Clique em uma linha para ver os detalhes' : 'Clique no título da coluna para ordenar'}</span></div>
     </div>`;
   let cur = [];
+  const syncSel = () => {
+    if (!selOn) return;
+    const n = ls.sel.size, vis = cur.filter(r => ls.sel.has(r.id)).length;
+    $('#selRun').disabled = !n;
+    $('#selLbl').textContent = n ? `${cfg.select.label} (${n})` : cfg.select.label;
+    $('#selbar').hidden = !n;
+    $('#selTxt').textContent = `${n} ${n === 1 ? 'programação selecionada' : 'programações selecionadas'}`;
+    const all2 = $('#ckAll');
+    all2.checked = cur.length > 0 && vis === cur.length;
+    all2.indeterminate = vis > 0 && vis < cur.length;
+    $$('#tb tr[data-id]').forEach(tr => tr.classList.toggle('sel', ls.sel.has(tr.dataset.id)));
+  };
   const view = () => {
     let rows = all.filter(r => !cfg.filter || !ls.f || cfg.filter.get(r) === ls.f);
+    if (cfg.dayFilter && ls.day) rows = rows.filter(r => r.data === ls.day);
     if (ls.q) { const q = ls.q.toLowerCase(); rows = rows.filter(r => cfg.cols.map(c => cellTxt(c, r)).join(' ').toLowerCase().includes(q)); }
     if (ls.s >= 0) {
       const c = cfg.cols[ls.s], v = r => c.sv ? c.sv(r) : cellTxt(c, r);
       rows = [...rows].sort((a, b) => { const x = v(a), y = v(b); return (typeof x === 'number' && typeof y === 'number' ? x - y : String(x).localeCompare(String(y), 'pt-BR', { numeric: true })) * ls.d; });
     }
-    $('#tb').innerHTML = rows.length ? rows.map(row => `<tr data-id="${row.id}" class="${cfg.detail ? 'click' : ''}">${cfg.cols.map(c => `<td class="${c.r ? 'r ' : ''}${c.cls || ''}">${c.render ? c.render(row) : esc(row[c.k])}</td>`).join('')}
+    const span = cfg.cols.length + 1 + (selOn ? 1 : 0);
+    $('#tb').innerHTML = rows.length ? rows.map(row => `<tr data-id="${row.id}" class="${cfg.detail ? 'click' : ''}">${selOn ? `<td class="ck-c"><input type="checkbox" data-ck="${row.id}" ${ls.sel.has(row.id) ? 'checked' : ''} aria-label="Selecionar"></td>` : ''}${cfg.cols.map(c => `<td class="${c.r ? 'r ' : ''}${c.cls || ''}">${c.render ? c.render(row) : esc(row[c.k])}</td>`).join('')}
       <td class="act"><div>${cfg.quick && cfg.quick.show(row) ? `<button class="ib ok" data-qk="${row.id}" title="${cfg.quick.label}" aria-label="${cfg.quick.label}">${ic(cfg.quick.icon, 15)}</button>` : ''}<button class="ib" data-e="${row.id}" title="Editar" aria-label="Editar">${ic('pencil', 15)}</button><button class="ib danger" data-d="${row.id}" title="Excluir" aria-label="Excluir">${ic('trash', 15)}</button></div></td></tr>`).join('')
-      : `<tr><td colspan="${cfg.cols.length + 1}">${all.length ? emptyState('Nenhum resultado encontrado', '<div>Ajuste a busca ou o filtro.</div>', 'search') : emptyState('Nenhum registro ainda', `<div>Clique em “${cfg.newText}” para começar.</div>`)}</td></tr>`;
+      : `<tr><td colspan="${span}">${all.length ? emptyState('Nenhum resultado encontrado', `<div>${ls.day ? 'Não há programações neste dia. ' : ''}Ajuste a busca ou o filtro.</div>`, 'search') : emptyState('Nenhum registro ainda', `<div>Clique em “${cfg.newText}” para começar.</div>`)}</td></tr>`;
     $('#cnt').textContent = `${rows.length} de ${all.length}`;
     $('#cnt2').textContent = `Mostrando ${rows.length} de ${all.length} registro${all.length === 1 ? '' : 's'}`;
     $$('#tb [data-e]').forEach(b => b.onclick = e => { e.stopPropagation(); form(cfg, by(cfg.col, b.dataset.e)); });
     $$('#tb [data-d]').forEach(b => b.onclick = e => { e.stopPropagation(); del(cfg, by(cfg.col, b.dataset.d)); });
     $$('#tb [data-qk]').forEach(b => b.onclick = e => { e.stopPropagation(); cfg.quick.run(by(cfg.col, b.dataset.qk)); });
+    $$('#tb .ck-c').forEach(td => td.onclick = e => e.stopPropagation());
+    $$('#tb [data-ck]').forEach(ck => ck.onchange = () => { ck.checked ? ls.sel.add(ck.dataset.ck) : ls.sel.delete(ck.dataset.ck); syncSel(); });
     if (cfg.detail) $$('#tb tr.click').forEach(tr => tr.onclick = () => cfg.detail(by(cfg.col, tr.dataset.id)));
     cur = rows;
+    syncSel();
   };
   view();
   $('#q').oninput = e => { ls.q = e.target.value; view(); };
   if (cfg.filter) $('#flt').onchange = e => { ls.f = e.target.value; view(); };
+  if (cfg.dayFilter) {
+    $('#day').onchange = e => { ls.day = e.target.value; crud(cfg); };
+    $('#dayHoje').onclick = () => { ls.day = ymd(new Date()); crud(cfg); };
+    if ($('#dayClr')) $('#dayClr').onclick = () => { ls.day = ''; crud(cfg); };
+  }
+  if (selOn) {
+    $('#ckAll').onchange = e => { cur.forEach(r => e.target.checked ? ls.sel.add(r.id) : ls.sel.delete(r.id)); $$('#tb [data-ck]').forEach(ck => ck.checked = e.target.checked); syncSel(); };
+    $('#selClr').onclick = () => { ls.sel.clear(); $$('#tb [data-ck]').forEach(ck => ck.checked = false); syncSel(); };
+    $('#selRun').onclick = () => cfg.select.run(all.filter(r => ls.sel.has(r.id)));
+  }
   $$('th[data-s]').forEach(th => th.onclick = () => { const i = +th.dataset.s; if (ls.s === i) ls.d *= -1; else { ls.s = i; ls.d = 1; } crud(cfg); });
   $('#novo').onclick = () => form(cfg, null);
   $('#csv').onclick = () => exportCsv(cfg, cur);
+}
+
+/* ---------------- Imagem da escala / serviços (para enviar no grupo) ---------------- */
+const DIAS_L = ['Domingo', 'Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sábado'];
+const dataLonga = s => { const [y, m, d] = s.split('-').map(Number); return `${DIAS_L[new Date(y, m - 1, d).getDay()]}, ${fdate(s)}`; };
+function roundRect(c, x, y, w, h, r) { c.beginPath(); c.moveTo(x + r, y); c.arcTo(x + w, y, x + w, y + h, r); c.arcTo(x + w, y + h, x, y + h, r); c.arcTo(x, y + h, x, y, r); c.arcTo(x, y, x + w, y, r); c.closePath(); }
+function drawLogo(c, x, y, size) {
+  const k = size / 104;
+  c.save(); c.translate(x - 8 * k, y - 8 * k); c.scale(k, k);
+  c.strokeStyle = '#2fae4e'; c.lineWidth = 5; c.beginPath(); c.arc(60, 60, 48, 0, Math.PI * 2); c.stroke();
+  c.fillStyle = '#2fae4e';
+  const poly = pts => { c.beginPath(); pts.forEach(([a, b], i) => i ? c.lineTo(a, b) : c.moveTo(a, b)); c.closePath(); c.fill(); };
+  poly([[40, 27], [53, 50], [46, 50], [57, 68], [23, 68], [34, 50], [27, 50]]);
+  poly([[80, 27], [93, 50], [86, 50], [97, 68], [63, 68], [74, 50], [67, 50]]);
+  c.fillRect(37, 68, 6, 10); c.fillRect(77, 68, 6, 10); c.fillRect(31, 78, 58, 4);
+  c.restore();
+}
+async function escalaImagem(tipo, rows) {
+  if (!rows.length) return;
+  try { await Promise.all([document.fonts.load('700 20px Inter'), document.fonts.load('600 20px Inter'), document.fonts.load('500 20px Inter')]); } catch (e) {}
+  rows = [...rows].sort((a, b) => (a.data + (a.inicio || '99')).localeCompare(b.data + (b.inicio || '99')));
+  const dias = [...new Set(rows.map(r => r.data))].sort();
+  const multi = dias.length > 1;
+  const W = 1080, P = 48, RH = 62, HEAD = 168, SUM = 98, TH = 46, FOOT = 84;
+  const H = HEAD + SUM + TH + rows.length * RH + FOOT;
+  const sc = 2, cv = document.createElement('canvas');
+  cv.width = W * sc; cv.height = H * sc;
+  const c = cv.getContext('2d'); c.scale(sc, sc);
+  const F = (w, s) => `${w} ${s}px Inter, Arial, sans-serif`;
+  const fit = (t, max) => { t = String(t ?? '—'); if (c.measureText(t).width <= max) return t; while (t.length > 1 && c.measureText(t + '…').width > max) t = t.slice(0, -1); return t + '…'; };
+  const spaced = (t, x, y, sp) => { for (const ch of t) { c.fillText(ch, x, y); x += c.measureText(ch).width + sp; } };
+
+  // fundo e cabeçalho
+  c.fillStyle = '#f5f7fa'; c.fillRect(0, 0, W, H);
+  c.fillStyle = '#002147'; c.fillRect(0, 0, W, HEAD);
+  c.fillStyle = '#2fae4e'; c.fillRect(0, HEAD - 5, W, 5);
+  drawLogo(c, P, 42, 80);
+  c.fillStyle = '#ffffff'; c.font = F(700, 30); spaced('SERAFINI', P + 100, 84, 5);
+  c.fillStyle = '#8fd6a0'; c.font = F(600, 13); spaced('TRANSPORTES', P + 101, 108, 7.4);
+  c.textAlign = 'right';
+  c.fillStyle = '#9fb6e6'; c.font = F(600, 15); c.fillText(tipo === 'escala' ? 'ESCALA PROGRAMADA' : 'SERVIÇOS PROGRAMADOS', W - P, 72);
+  c.fillStyle = '#ffffff'; c.font = F(700, 27); c.fillText(multi ? `${fdate(dias[0])} a ${fdate(dias[dias.length - 1])}` : dataLonga(dias[0]), W - P, 108);
+  c.textAlign = 'left';
+
+  // resumo
+  const mots = new Set(rows.map(r => r.motoristaId)).size, via = sumBy(rows, r => +r.qtdPrevista || 0);
+  const nomeTipo = tipo === 'escala' ? (rows.length === 1 ? 'escala' : 'escalas') : (rows.length === 1 ? 'serviço' : 'serviços');
+  let cx = P; const cy = HEAD + 26;
+  [[rows.length, nomeTipo], [mots, mots === 1 ? 'motorista' : 'motoristas'], [via, 'viagens previstas']].forEach(([n, l]) => {
+    c.font = F(700, 20); const a = String(n), wa = c.measureText(a).width;
+    c.font = F(500, 16); const w = wa + c.measureText(l).width + 46;
+    roundRect(c, cx, cy, w, 46, 23); c.fillStyle = '#ffffff'; c.fill(); c.strokeStyle = '#e4e9f0'; c.lineWidth = 1; c.stroke();
+    c.fillStyle = '#002147'; c.font = F(700, 20); c.fillText(a, cx + 18, cy + 30);
+    c.fillStyle = '#475467'; c.font = F(500, 16); c.fillText(l, cx + 26 + wa, cy + 30);
+    cx += w + 12;
+  });
+
+  // tabela
+  const cols = [...(multi ? [['Data', 92, r => fdate(r.data).slice(0, 5)]] : []), ['Início', 82, r => r.inicio || '—'], ['Motorista', 0, r => nome('motoristas', r.motoristaId)], ['Placa', 116, r => r.placa], ['Cliente', 150, r => nome('empresas', r.clienteId)], ['Lote', 142, r => r.lote], ['Vaga', 68, r => r.vaga || '—'], ['Viagens', 90, r => r.qtdPrevista]];
+  const fixed = sumBy(cols, x => x[1]); cols.forEach(x => { if (!x[1]) x[1] = W - 2 * P - fixed; });
+  let ty = HEAD + SUM;
+  const TW = W - 2 * P, TB = TH + rows.length * RH;
+  roundRect(c, P, ty, TW, TB, 14); c.fillStyle = '#ffffff'; c.fill(); c.strokeStyle = '#e4e9f0'; c.lineWidth = 1; c.stroke();
+  c.save(); roundRect(c, P, ty, TW, TB, 14); c.clip();
+  c.fillStyle = '#eef2f7'; c.fillRect(P, ty, TW, TH);
+  let x = P; c.font = F(600, 13); c.fillStyle = '#64748b';
+  cols.forEach(([l, w], i) => { const last = i === cols.length - 1; c.textAlign = last ? 'right' : 'left'; c.fillText(l.toUpperCase(), last ? x + w - 18 : x + 18, ty + 29); x += w; });
+  ty += TH;
+  rows.forEach((r, i) => {
+    if (i % 2) { c.fillStyle = '#f8fafc'; c.fillRect(P, ty, TW, RH); }
+    c.fillStyle = '#eef2f6'; c.fillRect(P, ty, TW, 1);
+    let x = P;
+    cols.forEach(([l, w, f], j) => {
+      const last = j === cols.length - 1, forte = l === 'Motorista' || l === 'Início' || l === 'Data';
+      c.font = F(forte ? 600 : 500, 17); c.fillStyle = forte ? '#0f1b2d' : '#344257';
+      c.textAlign = last ? 'right' : 'left';
+      c.fillText(fit(f(r), w - 30), last ? x + w - 18 : x + 18, ty + 38);
+      x += w;
+    });
+    ty += RH;
+  });
+  c.restore(); c.textAlign = 'left';
+
+  // rodapé
+  const now = new Date();
+  c.font = F(500, 14); c.fillStyle = '#64748b';
+  c.fillText(`Gerado em ${now.toLocaleDateString('pt-BR')} às ${now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}`, P, H - 34);
+  c.textAlign = 'right'; c.fillStyle = '#002147'; c.font = F(600, 14);
+  c.fillText('Serafini Transportes · Sistema de Gestão', W - P, H - 34); c.textAlign = 'left';
+
+  const blob = await new Promise(res => cv.toBlob(res, 'image/png'));
+  if (!blob) return toast('Não foi possível gerar a imagem neste navegador.', 'warn', 'alert');
+  const arq = `${tipo === 'escala' ? 'escala' : 'servicos'}-${multi ? dias[0] + '-a-' + dias[dias.length - 1] : dias[0]}.png`;
+  const url = URL.createObjectURL(blob);
+  let file = null; try { file = new File([blob], arq, { type: 'image/png' }); } catch (e) {}
+  const canShare = !!(file && navigator.canShare && navigator.canShare({ files: [file] }));
+  openModal({ size: 'lg', title: tipo === 'escala' ? 'Imagem da escala' : 'Imagem dos serviços', sub: `${rows.length} ${nomeTipo} · pronta para enviar no grupo`,
+    body: `<div class="img-prev"><img src="${url}" alt="Prévia da imagem gerada"></div>`,
+    footer: `<button class="btn btn-sec" data-x>Fechar</button>${canShare ? `<button class="btn btn-sec" id="imgShare">${ic('share', 15)}Compartilhar</button>` : ''}<button class="btn btn-pri" id="imgDown">${ic('download', 15)}Baixar imagem</button>` });
+  $('#imgDown').onclick = () => { const a = document.createElement('a'); a.href = url; a.download = arq; document.body.appendChild(a); a.click(); a.remove(); toast('Imagem baixada. É só enviar no grupo.', 'ok', 'download'); };
+  if ($('#imgShare')) $('#imgShare').onclick = () => navigator.share({ files: [file], title: 'Serafini Transportes' }).catch(() => {});
 }
 function del(cfg, it) {
   if (!it) return;
@@ -532,6 +667,8 @@ const progCfg = tipo => ({
   onChange: (v, n) => n === 'motoristaId' ? { placa: (S.veiculos.find(x => x.proprietario === nome('motoristas', v.motoristaId)) || {}).placa || '' } : {},
   beforeSave: o => { o.tipo = tipo; if (o.status === 'Finalizada' && !o.qtdViagens) o.qtdViagens = o.qtdPrevista; },
   log: (o, n) => `${n ? 'Nova programação' : 'Programação atualizada'}: lote ${o.lote} — ${nome('motoristas', o.motoristaId)}`,
+  dayFilter: true,
+  select: { label: 'Gerar imagem', run: rows => escalaImagem(tipo, rows) },
   detail: progDetail
 });
 const pagCfg = tipo => {
