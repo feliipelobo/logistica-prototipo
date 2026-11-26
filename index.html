@@ -2,47 +2,28 @@
 <html lang="pt-BR">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#002147">
 <title>Serafini Transportes · Sistema de Gestão</title>
 <link rel="icon" type="image/svg+xml" href="logo.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;650;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-<header class="top">
-  <div class="brand">
-    <img src="logo.svg" alt="Serafini Transportes">
-    <div class="wm"><b>SERAFINI</b><span>TRANSPORTES</span></div>
-  </div>
-  <div class="top-right">
-    <button id="btnLive" class="btn live" title="Simula movimentações em tempo real">Simulação ao vivo</button>
-    <button id="btnReset" class="btn ghost" title="Restaurar dados de demonstração">Restaurar dados</button>
-    <div class="clock"><b id="clkTime">--:--</b><span id="clkDate"></span></div>
-    <div class="user"><span class="avatar">AD</span><div>Administrador<small>Gestão operacional</small></div></div>
-  </div>
-</header>
+<div id="login" hidden></div>
 
-<nav class="menu" id="menu">
-  <div class="mi"><a href="#/dashboard" data-r="dashboard">Dashboard</a></div>
-  <div class="mi"><span>Programação</span><div class="sub">
-    <a href="#/escala" data-r="escala">Programar escala</a>
-    <a href="#/servico" data-r="servico">Programar serviço</a></div></div>
-  <div class="mi"><span>Pagamentos</span><div class="sub">
-    <a href="#/pag-motorista" data-r="pag-motorista">Pag. motorista</a>
-    <a href="#/pag-terceiros" data-r="pag-terceiros">Pag. terceiros</a>
-    <a href="#/abastecimentos" data-r="abastecimentos">Abastecimentos</a></div></div>
-  <div class="mi"><span>A receber</span><div class="sub">
-    <a href="#/rpas" data-r="rpas">RPA's</a></div></div>
-  <div class="mi"><span>Cadastro</span><div class="sub">
-    <a href="#/motoristas" data-r="motoristas">Motorista</a>
-    <a href="#/veiculos" data-r="veiculos">Veículo</a>
-    <a href="#/empresas" data-r="empresas">Empresa</a>
-    <a href="#/usuarios" data-r="usuarios">Usuário</a></div></div>
-</nav>
+<div id="shell" hidden>
+  <header class="top" id="top"></header>
+  <nav class="nav" id="nav" aria-label="Menu principal"></nav>
+  <div class="mnav" id="mnav"></div>
+  <main id="app"></main>
+  <footer class="foot"><span>© 2026 Serafini Transportes · Sistema de Gestão Operacional e Financeiro</span><span>Versão 1.0 · Ambiente de demonstração</span></footer>
+</div>
 
-<main id="app"></main>
-<footer class="rodape">Serafini Transportes · Sistema de Gestão Operacional e Financeiro · Versão de demonstração</footer>
 <div id="modal" class="modal" hidden></div>
-<div id="toasts"></div>
+<div id="toasts" aria-live="polite"></div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script src="js/app.js"></script>
