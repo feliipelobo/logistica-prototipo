@@ -318,76 +318,229 @@ const cadastros = {
 const dotCls = i => ({ '🏁': 'g', '💰': 'g', '✅': 'g', '💸': 'a', '⛽': 'a', '🧾': 'a', '🗑️': 'r' }[i] || 'n');
 function clock() {
   const d = new Date();
-  $('#clkTime').textContent = d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
-  $('#clkDate').textContent = d.toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: 'long', year: 'numeric' });
+  const t = d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+  const dt = d.toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: 'long', year: 'numeric' });
+  [['#clkTime', t], ['#clkDate', dt], ['#tvClock', t], ['#tvDate', dt]].forEach(([s, v]) => { const el = $(s); if (el) el.textContent = v; });
 }
 let charts = [], lastKpi = {};
-function dashboard() {
-  const P = S.progs;
-  const produzido = P.reduce((s, p) => s + total(p), 0);
-  const recebido = S.recebimentos.filter(g => g.status === 'Recebido').reduce((s, g) => s + g.valor, 0);
-  const aReceber = produzido - recebido;
-  const custoTot = P.reduce((s, p) => s + custo(p), 0);
-  const pago = P.reduce((s, p) => s + Math.min(pagoProg(p.id), custo(p)), 0);
-  const aPagar = custoTot - pago;
-  const comb = S.abastecimentos.reduce((s, a) => s + a.valorTotal, 0);
-  const lucro = recebido - pago - comb;
-  const viagens = P.reduce((s, p) => s + p.qtdViagens, 0);
-  const ativas = P.filter(p => p.status === 'Em andamento').length;
-  const k = { produzido, recebido, aReceber, aPagar, comb, lucro, viagens, ativas };
-  const kp = (id, label, val, cls, sub) => `<div class="kpi ${cls} ${lastKpi[id] !== undefined && lastKpi[id] !== val ? 'flash' : ''}"><small>${label}</small><b>${id === 'viagens' || id === 'ativas' ? num(val) : brl(val)}</b><i>${sub}</i></div>`;
-  $('#app').innerHTML = `
-    <div class="head"><div><div class="crumb">Serafini Transportes › Visão geral</div><h1>Dashboard</h1><p class="sub-h"><span class="pulse"></span><span class="tag-live">Tempo real</span> &nbsp;·&nbsp; indicadores atualizados a cada lançamento no sistema</p></div></div>
-    <div class="kpis">
-      ${kp('produzido', 'Total produzido', produzido, 'n', 'Receita bruta das operações')}
-      ${kp('recebido', 'Recebido', recebido, 'g', 'Entradas confirmadas')}
-      ${kp('aReceber', 'A receber', aReceber, 'a', 'Em aberto com clientes')}
-      ${kp('aPagar', 'A pagar (motoristas)', aPagar, 'r', 'Saldo pendente')}
-      ${kp('viagens', 'Viagens realizadas', viagens, 'b', 'Todas as programações')}
-      ${kp('ativas', 'Operações em andamento', ativas, 'b', 'Neste momento')}
-      ${kp('comb', 'Combustível', comb, 'r', num(S.abastecimentos.reduce((s, a) => s + a.litros, 0)) + ' litros abastecidos')}
-      ${kp('lucro', 'Resultado de caixa', lucro, lucro >= 0 ? 'g' : 'r', 'Recebido − pago − combustível')}
-    </div>
-    <div class="grid g2"><div class="card"><h3>Produção × Custo — últimos 8 períodos</h3><div class="chartbox"><canvas id="c1"></canvas></div></div>
-      <div class="card"><h3>Status das programações</h3><div class="chartbox"><canvas id="c2"></canvas></div></div></div>
-    <div class="grid g21" style="margin-top:16px">
-      <div class="card"><h3>Faturamento por cliente</h3><div class="chartbox"><canvas id="c3"></canvas></div></div>
-      <div class="card"><h3>Atividade recente</h3><ul class="feed">${S.log.slice(0, 12).map(l => `<li><span class="dot ${dotCls(l.icon)}"></span><div>${esc(l.msg)}<small>${new Date(l.t).toLocaleTimeString('pt-BR')}</small></div></li>`).join('')}</ul></div></div>
-    <div class="grid g2" style="margin-top:16px">
-      <div class="card"><h3>Operações em andamento</h3>${ativasHtml()}</div>
-      <div class="card"><h3>Ranking de motoristas</h3><div class="rank">${rankHtml()}</div></div></div>`;
-  lastKpi = k;
-  drawCharts();
+const PKEY = 'serafini_periodo';
+let per = (() => { try { return localStorage.getItem(PKEY) || '30'; } catch (e) { return '30'; } })();
+const PERIODS = [['1', 'Hoje'], ['7', '7 dias'], ['30', '30 dias'], ['all', 'Tudo']];
+const perLabel = p => ({ '1': 'hoje', '7': 'últimos 7 dias', '30': 'últimos 30 dias', all: 'todo o período' }[p]);
+const sinceOf = p => { if (p === 'all') return ''; const d = new Date(); d.setDate(d.getDate() - (+p - 1)); return ymd(d); };
+const sumBy = (a, f) => a.reduce((s, x) => s + f(x), 0);
+const pct = (a, b) => b ? Math.round(a / b * 100) : 0;
+const daysOpen = d => Math.max(0, Math.round((new Date(ymd(new Date())) - new Date(d)) / 864e5));
+const kshort = v => Math.abs(v) >= 1000 ? 'R$ ' + num(Math.round(v / 100) / 10) + ' mil' : 'R$ ' + num(v);
+
+function metrics(p) {
+  const s = sinceOf(p);
+  const P = S.progs.filter(x => !s || x.data >= s);
+  const ids = new Set(P.map(x => x.id));
+  const A = S.abastecimentos.filter(a => !s || a.data >= s);
+  const produzido = sumBy(P, total);
+  const recebido = sumBy(S.recebimentos.filter(g => ids.has(g.progId) && g.status === 'Recebido'), g => g.valor);
+  const custoTot = sumBy(P, custo);
+  const pago = sumBy(P, x => Math.min(pagoProg(x.id), custo(x)));
+  const comb = sumBy(A, a => a.valorTotal);
+  const viagens = sumBy(P, x => x.qtdViagens);
+  const margem = produzido - custoTot - comb;
+  const pend = pendencias(P);
+  return {
+    P, produzido, recebido, aReceber: Math.max(0, produzido - recebido), custoTot, pago, aPagar: Math.max(0, custoTot - pago),
+    comb, litros: sumBy(A, a => a.litros), viagens, margem, margemPct: pct(margem, produzido), ticket: viagens ? produzido / viagens : 0,
+    ativas: S.progs.filter(x => x.status === 'Em andamento'), programadas: S.progs.filter(x => x.status === 'Programada'),
+    pend, pendRec: pend.filter(x => x.tipo === 'Receber'), pendPag: pend.filter(x => x.tipo === 'Pagar')
+  };
 }
-function ativasHtml() {
-  const a = S.progs.filter(p => p.status === 'Em andamento');
+function pendencias(P) {
+  const out = [];
+  P.filter(p => p.status === 'Finalizada').forEach(p => {
+    if (stReceber(p)[0] !== 'Recebido') out.push({ tipo: 'Receber', p, quem: nome('empresas', p.clienteId), valor: total(p) - recProg(p.id), dias: daysOpen(p.data) });
+    if (stPagar(p)[0] !== 'Pago') out.push({ tipo: 'Pagar', p, quem: nome('motoristas', p.motoristaId), valor: Math.max(0, custo(p) - pagoProg(p.id)), dias: daysOpen(p.data) });
+  });
+  return out.filter(x => x.valor > 0).sort((a, b) => b.dias - a.dias);
+}
+function serie(p) {
+  const first = S.progs.reduce((m, x) => x.data < m ? x.data : m, ymd(new Date()));
+  const n = p === 'all' ? daysOpen(first) + 1 : Math.max(14, +p);
+  const days = [];
+  for (let i = n - 1; i >= 0; i--) { const d = new Date(); d.setDate(d.getDate() - i); days.push(ymd(d)); }
+  return { days, prod: days.map(d => sumBy(S.progs.filter(x => x.data === d), total)), cust: days.map(d => sumBy(S.progs.filter(x => x.data === d), custo)) };
+}
+
+/* blocos reutilizados no Dashboard e no Modo TV */
+const flash = (id, v) => lastKpi[id] !== undefined && lastKpi[id] !== v ? 'flash' : '';
+const meter = v => `<div class="meter"><i style="width:${Math.max(0, Math.min(100, v))}%"></i></div>`;
+function kpiBig(m) {
+  return `
+    <div class="kpi kbig ${flash('produzido', m.produzido)}"><small>Faturamento</small><b>${brl(m.produzido)}</b><i>${num(m.viagens)} viagens · ticket médio ${brl(m.ticket)}</i></div>
+    <div class="kpi kbig ${flash('recebido', m.recebido)}"><small>Recebido</small><b>${brl(m.recebido)}</b><i>${pct(m.recebido, m.produzido)}% do faturamento</i>${meter(pct(m.recebido, m.produzido))}</div>
+    <div class="kpi kbig ${flash('aReceber', m.aReceber)}"><small>A receber</small><b>${brl(m.aReceber)}</b><i>${m.pendRec.length} lote(s) finalizado(s) em aberto</i></div>
+    <div class="kpi kbig ${flash('margem', m.margem)}"><small>Margem operacional</small><b class="${m.margem < 0 ? 'neg' : ''}">${brl(m.margem)}</b><i>${m.margemPct}% · faturamento − motoristas − combustível</i>${meter(m.margemPct)}</div>`;
+}
+function kpiMini(m) {
+  return `
+    <div class="mini"><span>Em andamento</span><b>${m.ativas.length}</b><em>operações agora</em></div>
+    <div class="mini"><span>Programadas</span><b>${m.programadas.length}</b><em>aguardando início</em></div>
+    <div class="mini"><span>A pagar motoristas</span><b>${brl(m.aPagar)}</b><em>inclui operações em andamento</em></div>
+    <div class="mini"><span>Combustível</span><b>${brl(m.comb)}</b><em>${num(m.litros)} litros</em></div>`;
+}
+function stackHtml(m) {
+  const row = (t, a, la, b, lb) => {
+    const tot = a + b, pa = tot ? a / tot * 100 : 0;
+    return `<div class="stack-row"><div class="stack-h"><b>${t}</b><span>${brl(tot)}</span></div>
+      <div class="stack"><i class="s-a" style="width:${pa}%"></i><i class="s-b" style="width:${100 - pa}%"></i></div>
+      <div class="stack-l"><span><i class="s-a"></i>${la} <b>${brl(a)}</b></span><span><i class="s-b"></i>${lb} <b>${brl(b)}</b></span></div></div>`;
+  };
+  return row('Clientes', m.recebido, 'Recebido', m.aReceber, 'A receber') + row('Motoristas e terceiros', m.pago, 'Pago', m.aPagar, 'A pagar');
+}
+function pendHtml(list, n, tv) {
+  if (!list.length) return '<div class="empty">Nenhuma pendência no período</div>';
+  return `<table class="tbl-min"><thead><tr>${tv ? '' : '<th>Tipo</th>'}<th>Lote</th><th>${tv ? (list[0].tipo === 'Receber' ? 'Cliente' : 'Motorista') : 'Cliente / motorista'}</th><th class="r">Valor</th><th class="r">Em aberto</th></tr></thead><tbody>${list.slice(0, n).map(x => `<tr>${tv ? '' : `<td>${badge(x.tipo === 'Receber' ? 'A receber' : 'A pagar', x.tipo === 'Receber' ? 'run' : 'wait')}</td>`}<td>${esc(x.p.lote)}</td><td>${esc(x.quem)}</td><td class="r">${brl(x.valor)}</td><td class="r ${x.dias > 15 ? 'late' : ''}">${x.dias} dia${x.dias === 1 ? '' : 's'}</td></tr>`).join('')}</tbody></table>`;
+}
+function opsHtml(n) {
+  const a = [...S.progs.filter(p => p.status === 'Em andamento'), ...S.progs.filter(p => p.status === 'Programada')].slice(0, n);
   if (!a.length) return '<div class="empty">Nenhuma operação em andamento</div>';
-  return a.map(p => `<div style="margin-bottom:14px"><div style="display:flex;justify-content:space-between"><b>${esc(nome('motoristas', p.motoristaId))}</b><span>${esc(nome('empresas', p.clienteId))} · ${esc(p.lote)}</span></div><div class="bar"><i style="width:${p.qtdViagens / p.qtdPrevista * 100}%"></i></div><small style="color:var(--mut)">${p.qtdViagens}/${p.qtdPrevista} viagens · ${brl(total(p))} produzidos</small></div>`).join('');
+  return a.map(p => {
+    const pc = pct(p.qtdViagens, p.qtdPrevista);
+    return `<div class="op"><div class="op-h"><b>${esc(nome('motoristas', p.motoristaId))}</b>${badge(p.status, stProg(p.status))}</div>
+      <div class="op-s">${esc(nome('empresas', p.clienteId))} · Lote ${esc(p.lote)} · ${esc(p.placa)}</div>
+      ${meter(pc)}<div class="op-f"><span>${p.qtdViagens} de ${p.qtdPrevista} viagens (${pc}%)</span><span>${brl(total(p))}</span></div></div>`;
+  }).join('');
 }
-function rankHtml() {
+function clientesHtml(P) {
+  const tot = sumBy(P, total) || 1;
+  const r = S.empresas.map(e => [e.nome, sumBy(P.filter(p => p.clienteId === e.id), total)]).filter(x => x[1] > 0).sort((a, b) => b[1] - a[1]);
+  if (!r.length) return '<div class="empty">Sem faturamento no período</div>';
+  return r.map(([n, v]) => `<div class="hb"><div class="hb-h"><span>${esc(n)}</span><b>${brl(v)}</b></div>${meter(v / tot * 100)}<small>${pct(v, tot)}% do faturamento</small></div>`).join('');
+}
+function rankHtml(P) {
   const m = {};
-  S.progs.forEach(p => { m[p.motoristaId] = (m[p.motoristaId] || 0) + total(p); });
-  const r = Object.entries(m).sort((a, b) => b[1] - a[1]).slice(0, 5);
-  const mx = r[0] ? r[0][1] : 1;
-  return r.map((e, i) => `<div class="row"><div class="n">${i + 1}</div><div>${esc(nome('motoristas', e[0]))}<div class="bar"><i style="width:${e[1] / mx * 100}%"></i></div></div><b>${brl(e[1])}</b></div>`).join('');
+  P.forEach(p => { m[p.motoristaId] = m[p.motoristaId] || { v: 0, t: 0 }; m[p.motoristaId].v += total(p); m[p.motoristaId].t += p.qtdViagens; });
+  const r = Object.entries(m).filter(e => e[1].v > 0).sort((a, b) => b[1].v - a[1].v).slice(0, 5);
+  if (!r.length) return '<div class="empty">Sem produção no período</div>';
+  const mx = r[0][1].v;
+  return r.map(([id, o], i) => `<div class="row"><div class="n">${i + 1}</div><div><div class="hb-h"><span>${esc(nome('motoristas', id))}</span><b>${brl(o.v)}</b></div>${meter(o.v / mx * 100)}<small>${num(o.t)} viagens</small></div></div>`).join('');
 }
-function drawCharts() {
+
+function dashboard() {
+  const m = metrics(per);
+  const st = ['Programada', 'Em andamento', 'Finalizada'], stc = ['#c9d5ee', '#4f7fd9', '#0b2a6b'];
+  const stn = st.map(s => m.P.filter(p => p.status === s).length);
+  $('#app').innerHTML = `
+    <div class="head dhead"><div><div class="crumb">Serafini Transportes › Visão geral</div><h1>Dashboard</h1>
+      <p class="sub-h"><span class="pulse"></span><span class="tag-live">Tempo real</span> &nbsp;·&nbsp; Período: ${perLabel(per)} &nbsp;·&nbsp; atualizado às ${new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}</p></div>
+      <div class="tools"><div class="seg">${PERIODS.map(([v, l]) => `<button data-p="${v}" class="${v === per ? 'on' : ''}">${l}</button>`).join('')}</div>
+      <button class="btn" id="btnTv">Modo TV</button></div></div>
+    <div class="kpis">${kpiBig(m)}</div>
+    <div class="minis">${kpiMini(m)}</div>
+    <div class="grid g2">
+      <div class="card"><h3>Faturamento × custo com motoristas — por dia</h3><div class="chartbox"><canvas id="c1"></canvas></div></div>
+      <div class="card"><h3>Status das programações</h3><div class="donut"><div class="chartbox sm"><canvas id="c2"></canvas><div class="donut-c"><b>${m.P.length}</b><span>programações</span></div></div>
+        <ul class="leg">${st.map((s, i) => `<li><i style="background:${stc[i]}"></i>${s}<b>${stn[i]}</b></li>`).join('')}</ul></div></div>
+    </div>
+    <div class="grid g12">
+      <div class="card"><h3>Fluxo financeiro</h3>${stackHtml(m)}</div>
+      <div class="card"><h3>Pendências financeiras <span class="h-note">lotes finalizados aguardando pagamento ou recebimento</span></h3>${pendHtml(m.pend, 6)}</div>
+    </div>
+    <div class="grid g3">
+      <div class="card"><h3>Operações em andamento</h3>${opsHtml(4)}</div>
+      <div class="card"><h3>Faturamento por cliente</h3>${clientesHtml(m.P)}</div>
+      <div class="card"><h3>Ranking de motoristas</h3><div class="rank">${rankHtml(m.P)}</div></div>
+    </div>
+    <div class="card"><h3>Atividade recente</h3><ul class="feed cols">${S.log.slice(0, 8).map(l => `<li><span class="dot ${dotCls(l.icon)}"></span><div>${esc(l.msg)}<small>${new Date(l.t).toLocaleTimeString('pt-BR')}</small></div></li>`).join('')}</ul></div>`;
+  lastKpi = { produzido: m.produzido, recebido: m.recebido, aReceber: m.aReceber, margem: m.margem };
+  document.querySelectorAll('.seg [data-p]').forEach(b => b.onclick = () => { per = b.dataset.p; try { localStorage.setItem(PKEY, per); } catch (e) {} render(); });
+  $('#btnTv').onclick = tvEnter;
+  drawCharts(m, stn, stc);
+}
+function chartBase(dark) {
+  const tick = dark ? '#c5d3f0' : '#667189', grid = dark ? '#ffffff1a' : '#e6ebf3';
+  return { maintainAspectRatio: false, animation: { duration: 500 }, plugins: { legend: { position: 'bottom', labels: { color: tick, boxWidth: 12, font: { size: dark ? 15 : 12 } } }, tooltip: { callbacks: { label: c => ' ' + c.dataset.label + ': ' + brl(c.parsed.y) } } },
+    scales: { x: { grid: { display: false }, ticks: { color: tick, maxRotation: 0, autoSkipPadding: 14, font: { size: dark ? 14 : 11 } } }, y: { grid: { color: grid }, border: { display: false }, ticks: { color: tick, font: { size: dark ? 14 : 11 }, callback: kshort } } } };
+}
+function dailyChart(el, dark) {
+  const s = serie(per);
+  return new Chart(el, { data: { labels: s.days.map(d => fdate(d).slice(0, 5)), datasets: [
+    { type: 'bar', label: 'Faturamento', data: s.prod, backgroundColor: dark ? '#6f9bff' : '#0b2a6b', maxBarThickness: 34 },
+    { type: 'bar', label: 'Custo com motoristas', data: s.cust, backgroundColor: dark ? '#3dbb55' : '#9fb6e6', maxBarThickness: 34 }] }, options: chartBase(dark) });
+}
+function drawCharts(m, stn, stc) {
   charts.forEach(c => c.destroy()); charts = [];
   if (typeof Chart === 'undefined') return;
-  Chart.defaults.font.family = 'Inter, Segoe UI, system-ui, sans-serif';
-  const days = [...new Set(S.progs.map(p => p.data))].sort().slice(-8);
-  const prod = days.map(d => S.progs.filter(p => p.data === d).reduce((s, p) => s + total(p), 0));
-  const cust = days.map(d => S.progs.filter(p => p.data === d).reduce((s, p) => s + custo(p), 0));
-  charts.push(new Chart($('#c1'), { type: 'bar', data: { labels: days.map(d => fdate(d).slice(0, 5)), datasets: [{ label: 'Produzido', data: prod, backgroundColor: '#061330', borderRadius: 0 }, { label: 'Custo motorista', data: cust, backgroundColor: '#8d9cc0', borderRadius: 0 }] }, options: { maintainAspectRatio: false, animation: { duration: 500 }, plugins: { legend: { position: 'bottom' } }, scales: { y: { ticks: { callback: v => 'R$ ' + num(v) } } } } }));
-  const st = ['Programada', 'Em andamento', 'Finalizada'];
-  charts.push(new Chart($('#c2'), { type: 'doughnut', data: { labels: st, datasets: [{ data: st.map(s => S.progs.filter(p => p.status === s).length), backgroundColor: ['#d3d9e6', '#7f90b8', '#061330'], borderWidth: 2, borderColor: '#fff' }] }, options: { maintainAspectRatio: false, cutout: '62%', plugins: { legend: { position: 'bottom' } } } }));
-  const cl = S.empresas.map(e => [e.nome, S.progs.filter(p => p.clienteId === e.id).reduce((s, p) => s + total(p), 0)]);
-  charts.push(new Chart($('#c3'), { type: 'bar', data: { labels: cl.map(c => c[0]), datasets: [{ data: cl.map(c => c[1]), backgroundColor: '#061330', borderRadius: 0 }] }, options: { indexAxis: 'y', maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { ticks: { callback: v => 'R$ ' + num(v) } } } } }));
+  Chart.defaults.font.family = '"Segoe UI", Roboto, Arial, sans-serif';
+  charts.push(dailyChart($('#c1'), false));
+  charts.push(new Chart($('#c2'), { type: 'doughnut', data: { labels: ['Programada', 'Em andamento', 'Finalizada'], datasets: [{ data: stn, backgroundColor: stc, borderWidth: 2, borderColor: '#fff' }] }, options: { maintainAspectRatio: false, cutout: '72%', plugins: { legend: { display: false } } } }));
 }
+
+/* ---------------- Modo TV ---------------- */
+const TV_MS = 12000;
+let tvTimer = null, tvIdx = 0, tvT0 = 0, tvChart = null;
+const tvSlides = [
+  ['Resumo financeiro', m => `<div class="kpis">${kpiBig(m)}</div><div class="minis">${kpiMini(m)}</div><div class="card">${stackHtml(m)}</div>`],
+  ['Operações em andamento', () => `<div class="ops-grid">${opsHtml(8)}</div>`],
+  ['Faturamento diário', () => `<div class="card"><div class="chartbox xl"><canvas id="tvc1"></canvas></div></div>`],
+  ['Clientes e motoristas', m => `<div class="grid g11"><div class="card"><h3>Faturamento por cliente</h3>${clientesHtml(m.P)}</div><div class="card"><h3>Ranking de motoristas</h3><div class="rank">${rankHtml(m.P)}</div></div></div>`],
+  ['Pendências financeiras', m => `<div class="grid g11"><div class="card"><h3>A receber de clientes · ${brl(sumBy(m.pendRec, x => x.valor))}</h3>${pendHtml(m.pendRec, 7, 1)}</div><div class="card"><h3>A pagar a motoristas · ${brl(sumBy(m.pendPag, x => x.valor))}</h3>${pendHtml(m.pendPag, 7, 1)}</div></div>`]
+];
+function tvEnter() {
+  const el = document.documentElement;
+  if (el.requestFullscreen) el.requestFullscreen().catch(() => {});
+  location.hash = '#/tv';
+}
+function tv() {
+  document.body.classList.add('tv');
+  if (!$('#tvBody')) {
+    $('#app').innerHTML = `<div class="tv-wrap">
+      <div class="tv-top"><div class="brand"><img src="logo.svg" alt=""><div class="wm"><b>SERAFINI</b><span>TRANSPORTES</span></div></div>
+        <div class="tv-title"><small>Painel operacional · ${perLabel(per)}</small><b id="tvTitle"></b></div>
+        <div class="tv-clock"><b id="tvClock"></b><span id="tvDate"></span></div></div>
+      <div class="tv-body" id="tvBody"></div>
+      <div class="tv-foot"><div class="tv-dots" id="tvDots"></div><div class="tv-live"><span class="pulse"></span>Atualização em tempo real</div><button class="btn ghost sm" id="tvExit">Sair do modo TV</button></div>
+      <div class="tv-prog"><i id="tvProg"></i></div></div>`;
+    $('#tvExit').onclick = tvExit;
+  }
+  tvShow(false);
+  if (!tvTimer) { tvT0 = Date.now(); tvTimer = setInterval(tvLoop, 100); }
+}
+function tvLoop() {
+  const e = Date.now() - tvT0, pr = $('#tvProg');
+  if (pr) pr.style.width = Math.min(100, e / TV_MS * 100) + '%';
+  if (e >= TV_MS) tvGo(1);
+}
+function tvGo(d) { tvIdx = (tvIdx + d + tvSlides.length) % tvSlides.length; tvT0 = Date.now(); tvShow(true); }
+function tvShow(anim) {
+  const m = metrics(per);
+  const [t, fn] = tvSlides[tvIdx];
+  $('#tvTitle').textContent = t;
+  $('#tvBody').innerHTML = `<div class="tv-slide ${anim ? 'enter' : ''}">${fn(m)}</div>`;
+  $('#tvDots').innerHTML = tvSlides.map((s, i) => `<i class="${i === tvIdx ? 'on' : ''}" data-i="${i}"></i>`).join('');
+  $('#tvDots').querySelectorAll('i').forEach(d => d.onclick = () => { tvIdx = +d.dataset.i; tvT0 = Date.now(); tvShow(true); });
+  lastKpi = { produzido: m.produzido, recebido: m.recebido, aReceber: m.aReceber, margem: m.margem };
+  if (tvChart) { tvChart.destroy(); tvChart = null; }
+  if ($('#tvc1') && typeof Chart !== 'undefined') tvChart = dailyChart($('#tvc1'), true);
+  clock();
+}
+function tvStop() {
+  clearInterval(tvTimer); tvTimer = null;
+  if (tvChart) { tvChart.destroy(); tvChart = null; }
+  document.body.classList.remove('tv');
+}
+function tvExit() {
+  if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
+  location.hash = '#/dashboard';
+}
+document.addEventListener('keydown', e => {
+  if (!document.body.classList.contains('tv')) return;
+  if (e.key === 'Escape') tvExit();
+  if (e.key === 'ArrowRight') tvGo(1);
+  if (e.key === 'ArrowLeft') tvGo(-1);
+});
 
 /* ---------------- Roteamento ---------------- */
 const routes = {
-  dashboard, escala: () => crud(progCfg('escala')), servico: () => crud(progCfg('servico')),
+  dashboard, tv, escala: () => crud(progCfg('escala')), servico: () => crud(progCfg('servico')),
   'pag-motorista': () => crud(pagCfg('Próprio')), 'pag-terceiros': () => crud(pagCfg('Terceiro')),
   abastecimentos: () => crud(abastCfg), rpas: () => crud(recCfg),
   motoristas: () => crud(cadastros.motoristas), veiculos: () => crud(cadastros.veiculos), empresas: () => crud(cadastros.empresas), usuarios: () => crud(cadastros.usuarios)
@@ -396,6 +549,7 @@ function render(fromChange) {
   if (modalOpen) { pendingRender = true; return; }
   const r = (location.hash.replace('#/', '') || 'dashboard');
   const route = routes[r] ? r : 'dashboard';
+  if (route !== 'tv' && (tvTimer || document.body.classList.contains('tv'))) tvStop();
   document.querySelectorAll('.menu a').forEach(a => a.classList.toggle('on', a.dataset.r === route));
   document.querySelectorAll('.mi').forEach(m => m.classList.toggle('active', !!m.querySelector('a.on')));
   const q = $('#q'), qv = fromChange && q ? q.value : '';
