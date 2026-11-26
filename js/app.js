@@ -84,7 +84,7 @@ function seed() {
 
 function load() { try { const v = localStorage.getItem(KEY); if (v) return JSON.parse(v); } catch (e) {} return null; }
 function save(msg, icon) {
-  if (msg) { S.log.unshift({ t: Date.now(), msg, icon: icon || '•' }); S.log = S.log.slice(0, 40); toast((icon || '') + ' ' + msg); }
+  if (msg) { S.log.unshift({ t: Date.now(), msg, icon: icon || '•' }); S.log = S.log.slice(0, 40); toast(msg); }
   try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {}
   render(true);
 }
@@ -139,9 +139,9 @@ function crud(cfg) {
   const sum = cfg.summary ? cfg.summary(rows) : [];
   const app = $('#app');
   app.innerHTML = `
-    <div class="head"><div><h1>${cfg.title}</h1><p class="sub-h">${cfg.desc || ''}</p></div>
-      <div class="tools"><input class="search" placeholder="Buscar..." id="q"><button class="btn" id="novo">+ ${cfg.newLabel || 'Novo'}</button></div></div>
-    ${sum.length ? `<div class="kpis">${sum.map(k => `<div class="kpi ${k[2] || ''}"><small>${k[0]}</small><b>${k[1]}</b></div>`).join('')}</div>` : ''}
+    <div class="head"><div><div class="crumb">Serafini Transportes › ${cfg.title}</div><h1>${cfg.title}</h1><p class="sub-h">${cfg.desc || ''}</p></div>
+      <div class="tools"><input class="search" placeholder="Buscar..." id="q"><button class="btn pri" id="novo">+ ${cfg.newLabel || 'Novo'}</button></div></div>
+    ${sum.length ? `<div class="list-kpis"><div class="kpis">${sum.map(k => `<div class="kpi ${k[2] || ''}"><small>${k[0]}</small><b>${k[1]}</b></div>`).join('')}</div></div>` : ''}
     <div class="tablewrap"><table><thead><tr>${cfg.cols.map(c => `<th class="${c.r ? 'r' : ''}">${c.label}</th>`).join('')}<th></th></tr></thead>
     <tbody>${rows.length ? rows.map(row => `<tr data-id="${row.id}" class="${cfg.detail ? 'click' : ''}">${cfg.cols.map(c => `<td class="${c.r ? 'r' : ''}">${c.render ? c.render(row) : esc(row[c.k])}</td>`).join('')}
       <td><div class="act"><button class="btn sm sec" data-e="${row.id}">Editar</button><button class="btn sm danger" data-d="${row.id}">Excluir</button></div></td></tr>`).join('') : `<tr><td class="empty" colspan="${cfg.cols.length + 1}">Nenhum registro ainda. Clique em “+ ${cfg.newLabel || 'Novo'}”.</td></tr>`}</tbody></table></div>`;
@@ -233,7 +233,7 @@ const progCfg = tipo => ({
   cols: [
     { label: 'Data', render: p => fdate(p.data) }, { label: 'Cliente', render: p => esc(nome('empresas', p.clienteId)) }, { label: 'Lote', k: 'lote' },
     { label: 'Motorista', render: p => esc(nome('motoristas', p.motoristaId)) }, { label: 'Placa', k: 'placa' },
-    { label: 'Viagens', render: p => `${p.qtdViagens}/${p.qtdPrevista}<div class="bar"><i style="width:${Math.min(100, p.qtdPrevista ? p.qtdViagens / p.qtdPrevista * 100 : 0)}%"></i></div>` },
+    { label: 'Viagens', render: p => `${p.qtdViagens}/${p.qtdPrevista}<div class="bar"><i class="${p.qtdViagens >= p.qtdPrevista ? 'full' : ''}" style="width:${Math.min(100, p.qtdPrevista ? p.qtdViagens / p.qtdPrevista * 100 : 0)}%"></i></div>` },
     { label: 'Total produzido', r: 1, render: p => brl(total(p)) },
     { label: 'Status', render: p => badge(p.status, stProg(p.status)) },
     { label: 'Pagar', render: p => badge(...stPagar(p)) }, { label: 'Receber', render: p => badge(...stReceber(p)) }
@@ -315,6 +315,12 @@ const cadastros = {
 };
 
 /* ---------------- Dashboard ---------------- */
+const dotCls = i => ({ '🏁': 'g', '💰': 'g', '✅': 'g', '💸': 'a', '⛽': 'a', '🧾': 'a', '🗑️': 'r' }[i] || 'n');
+function clock() {
+  const d = new Date();
+  $('#clkTime').textContent = d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+  $('#clkDate').textContent = d.toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: 'long', year: 'numeric' });
+}
 let charts = [], lastKpi = {};
 function dashboard() {
   const P = S.progs;
@@ -331,21 +337,22 @@ function dashboard() {
   const k = { produzido, recebido, aReceber, aPagar, comb, lucro, viagens, ativas };
   const kp = (id, label, val, cls, sub) => `<div class="kpi ${cls} ${lastKpi[id] !== undefined && lastKpi[id] !== val ? 'flash' : ''}"><small>${label}</small><b>${id === 'viagens' || id === 'ativas' ? num(val) : brl(val)}</b><i>${sub}</i></div>`;
   $('#app').innerHTML = `
-    <div class="head"><div><h1>Dashboard</h1><p class="sub-h"><span class="pulse"></span><span class="tag-live">Em tempo real</span> · atualiza a cada lançamento no sistema</p></div></div>
+    <div class="head"><div><div class="crumb">Serafini Transportes › Visão geral</div><h1>Dashboard</h1><p class="sub-h"><span class="pulse"></span><span class="tag-live">Tempo real</span> &nbsp;·&nbsp; indicadores atualizados a cada lançamento no sistema</p></div></div>
     <div class="kpis">
-      ${kp('produzido', 'Total produzido', produzido, 'n', num(viagens) + ' viagens realizadas')}
+      ${kp('produzido', 'Total produzido', produzido, 'n', 'Receita bruta das operações')}
       ${kp('recebido', 'Recebido', recebido, 'g', 'Entradas confirmadas')}
       ${kp('aReceber', 'A receber', aReceber, 'a', 'Em aberto com clientes')}
       ${kp('aPagar', 'A pagar (motoristas)', aPagar, 'r', 'Saldo pendente')}
-      ${kp('comb', 'Combustível', comb, 'r', num(S.abastecimentos.reduce((s, a) => s + a.litros, 0)) + ' litros')}
+      ${kp('viagens', 'Viagens realizadas', viagens, 'b', 'Todas as programações')}
+      ${kp('ativas', 'Operações em andamento', ativas, 'b', 'Neste momento')}
+      ${kp('comb', 'Combustível', comb, 'r', num(S.abastecimentos.reduce((s, a) => s + a.litros, 0)) + ' litros abastecidos')}
       ${kp('lucro', 'Resultado de caixa', lucro, lucro >= 0 ? 'g' : 'r', 'Recebido − pago − combustível')}
-      ${kp('ativas', 'Operações em andamento', ativas, '', 'Agora')}
     </div>
     <div class="grid g2"><div class="card"><h3>Produção × Custo — últimos 8 períodos</h3><div class="chartbox"><canvas id="c1"></canvas></div></div>
       <div class="card"><h3>Status das programações</h3><div class="chartbox"><canvas id="c2"></canvas></div></div></div>
     <div class="grid g21" style="margin-top:16px">
       <div class="card"><h3>Faturamento por cliente</h3><div class="chartbox"><canvas id="c3"></canvas></div></div>
-      <div class="card"><h3>Atividade recente</h3><ul class="feed">${S.log.slice(0, 12).map(l => `<li><div class="ic">${l.icon}</div><div>${esc(l.msg)}<small>${new Date(l.t).toLocaleTimeString('pt-BR')}</small></div></li>`).join('')}</ul></div></div>
+      <div class="card"><h3>Atividade recente</h3><ul class="feed">${S.log.slice(0, 12).map(l => `<li><span class="dot ${dotCls(l.icon)}"></span><div>${esc(l.msg)}<small>${new Date(l.t).toLocaleTimeString('pt-BR')}</small></div></li>`).join('')}</ul></div></div>
     <div class="grid g2" style="margin-top:16px">
       <div class="card"><h3>Operações em andamento</h3>${ativasHtml()}</div>
       <div class="card"><h3>Ranking de motoristas</h3><div class="rank">${rankHtml()}</div></div></div>`;
@@ -371,11 +378,11 @@ function drawCharts() {
   const days = [...new Set(S.progs.map(p => p.data))].sort().slice(-8);
   const prod = days.map(d => S.progs.filter(p => p.data === d).reduce((s, p) => s + total(p), 0));
   const cust = days.map(d => S.progs.filter(p => p.data === d).reduce((s, p) => s + custo(p), 0));
-  charts.push(new Chart($('#c1'), { type: 'bar', data: { labels: days.map(d => fdate(d).slice(0, 5)), datasets: [{ label: 'Produzido', data: prod, backgroundColor: '#2f6fed', borderRadius: 6 }, { label: 'Custo motorista', data: cust, backgroundColor: '#f59e0b', borderRadius: 6 }] }, options: { maintainAspectRatio: false, animation: { duration: 500 }, plugins: { legend: { position: 'bottom' } }, scales: { y: { ticks: { callback: v => 'R$ ' + num(v) } } } } }));
+  charts.push(new Chart($('#c1'), { type: 'bar', data: { labels: days.map(d => fdate(d).slice(0, 5)), datasets: [{ label: 'Produzido', data: prod, backgroundColor: '#061330', borderRadius: 0 }, { label: 'Custo motorista', data: cust, backgroundColor: '#8d9cc0', borderRadius: 0 }] }, options: { maintainAspectRatio: false, animation: { duration: 500 }, plugins: { legend: { position: 'bottom' } }, scales: { y: { ticks: { callback: v => 'R$ ' + num(v) } } } } }));
   const st = ['Programada', 'Em andamento', 'Finalizada'];
-  charts.push(new Chart($('#c2'), { type: 'doughnut', data: { labels: st, datasets: [{ data: st.map(s => S.progs.filter(p => p.status === s).length), backgroundColor: ['#b8c2d9', '#2f6fed', '#30b84a'], borderWidth: 0 }] }, options: { maintainAspectRatio: false, cutout: '66%', plugins: { legend: { position: 'bottom' } } } }));
+  charts.push(new Chart($('#c2'), { type: 'doughnut', data: { labels: st, datasets: [{ data: st.map(s => S.progs.filter(p => p.status === s).length), backgroundColor: ['#d3d9e6', '#7f90b8', '#061330'], borderWidth: 2, borderColor: '#fff' }] }, options: { maintainAspectRatio: false, cutout: '62%', plugins: { legend: { position: 'bottom' } } } }));
   const cl = S.empresas.map(e => [e.nome, S.progs.filter(p => p.clienteId === e.id).reduce((s, p) => s + total(p), 0)]);
-  charts.push(new Chart($('#c3'), { type: 'bar', data: { labels: cl.map(c => c[0]), datasets: [{ data: cl.map(c => c[1]), backgroundColor: '#0a2463', borderRadius: 6 }] }, options: { indexAxis: 'y', maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { ticks: { callback: v => 'R$ ' + num(v) } } } } }));
+  charts.push(new Chart($('#c3'), { type: 'bar', data: { labels: cl.map(c => c[0]), datasets: [{ data: cl.map(c => c[1]), backgroundColor: '#061330', borderRadius: 0 }] }, options: { indexAxis: 'y', maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { ticks: { callback: v => 'R$ ' + num(v) } } } } }));
 }
 
 /* ---------------- Roteamento ---------------- */
@@ -430,12 +437,13 @@ function tick() {
 }
 function toggleLive() {
   const b = $('#btnLive');
-  if (timer) { clearInterval(timer); timer = null; b.textContent = '▶ Modo ao vivo'; b.classList.remove('on'); return; }
-  b.textContent = '■ Parar ao vivo'; b.classList.add('on'); tick(); timer = setInterval(tick, 3500);
+  if (timer) { clearInterval(timer); timer = null; b.textContent = 'Simulação ao vivo'; b.classList.remove('on'); return; }
+  b.textContent = 'Parar simulação'; b.classList.add('on'); tick(); timer = setInterval(tick, 3500);
 }
 
 /* ---------------- Início ---------------- */
 S = load() || seed();
+clock(); setInterval(clock, 15000);
 $('#btnLive').onclick = toggleLive;
 $('#btnReset').onclick = () => { if (!confirm('Restaurar os dados fictícios originais?')) return; S = seed(); save('Dados de demonstração restaurados', '↺'); };
 render();
