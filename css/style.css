@@ -699,3 +699,38 @@ main{padding-top:42px}
 body.tv main{padding:0}
 /* colunas um pouco mais compactas para a tabela caber inteira em telas comuns */
 @media (max-width:1600px){.tbl th,.tbl td{padding-left:11px;padding-right:11px}.prog{min-width:96px}.tbl .act>div{gap:0}}
+
+/* ---------- Vaga em destaque, resumo recolhível, observações e controle de vencimentos ---------- */
+.vaga{display:inline-flex;align-items:center;justify-content:center;min-width:38px;height:28px;padding:0 9px;border-radius:8px;background:var(--ox);color:#fff;font-weight:700;font-size:15px;letter-spacing:.01em;font-variant-numeric:tabular-nums;line-height:1}
+.vaga.sm{min-width:26px;height:20px;padding:0 6px;font-size:12px;border-radius:6px;margin-right:8px;vertical-align:1px}
+.sum{margin-bottom:20px}
+.sum-h{display:flex;align-items:center;gap:12px;margin-bottom:12px}
+.sum-h>span{font-size:11.5px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--mut)}
+.sum-h>i{flex:1;height:1px;background:var(--line)}
+.sum-t{display:inline-flex;align-items:center;gap:6px;height:28px;padding:0 11px 0 8px;border:1px solid var(--line);border-radius:999px;background:var(--surface);color:var(--ink-2);font:500 12.5px/1 var(--font);cursor:pointer;transition:background .15s,border-color .15s}
+.sum-t:hover{background:var(--bg);border-color:var(--field)}
+.sum-t em{font-style:normal}
+.sum-t .ic{transition:transform .2s ease;transform:rotate(180deg)}
+.sum.off .sum-t .ic{transform:none}
+.sum .stats{margin-bottom:0}
+.sum.off .stats{display:none}
+.sum.off{margin-bottom:16px}
+.note{display:flex;gap:12px;align-items:flex-start;padding:12px 16px;margin-bottom:20px;border:1px solid var(--info-bd);background:var(--info-bg);color:var(--info);border-radius:var(--r-lg);font-size:13.5px;line-height:1.55}
+.note .ic{margin-top:1px}
+.note b{font-weight:600}
+.note a{color:var(--ox);font-weight:600}
+.dlg-b .note{margin-bottom:16px}
+.nb{display:inline-grid;place-items:center;min-width:19px;height:19px;padding:0 5px;margin-left:7px;border-radius:999px;background:var(--red);color:#fff;font-size:11px;font-weight:700;line-height:1}
+.alert-bar{display:flex;align-items:center;gap:14px;padding:12px 16px;margin-bottom:20px;border:1px solid var(--warn-bd);background:var(--warn-bg);border-radius:var(--r-lg);color:var(--warn);text-decoration:none;transition:border-color .15s}
+.alert-bar.bad{border-color:var(--red-bd);background:var(--red-bg);color:var(--red)}
+.alert-bar:hover{border-color:currentColor}
+.ab-ic{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;background:#fff;flex:none}
+.ab-t{flex:1;min-width:0}
+.ab-t b{display:block;font-size:14px;font-weight:600;color:var(--ink)}
+.ab-t span{display:block;font-size:13px;color:var(--ink-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ab-go{display:inline-flex;align-items:center;gap:4px;font-size:13px;font-weight:600;white-space:nowrap}
+.stat.is-bad b{color:var(--red)}
+.stat.is-warn b{color:var(--warn)}
+.tv .vaga.sm{background:rgba(255,255,255,.16)}
+@media (max-width:700px){.alert-bar{flex-wrap:wrap}.ab-go{margin-left:48px}.ab-t span{white-space:normal}.note{font-size:13px}}
+.burger.has-al{position:relative}.burger.has-al::after{content:"";position:absolute;top:6px;right:6px;width:8px;height:8px;border-radius:50%;background:var(--red);box-shadow:0 0 0 2px #e2e6eb}

@@ -62,12 +62,14 @@ const ICONS = {
   pie: '<path d="M21.2 15.9A10 10 0 1 1 8 2.8"/><path d="M22 12A10 10 0 0 0 12 2v10z"/>',
   image: '<rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.1-3.1a2 2 0 0 0-2.8 0L6 21"/>',
   share: '<circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.6 13.5 6.8 4M15.4 6.5l-6.8 4"/>',
-  help: '<circle cx="12" cy="12" r="10"/><path d="M9.1 9a3 3 0 0 1 5.8 1c0 2-3 3-3 3M12 17h.01"/>'
+  help: '<circle cx="12" cy="12" r="10"/><path d="M9.1 9a3 3 0 0 1 5.8 1c0 2-3 3-3 3M12 17h.01"/>',
+  shield: '<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/>',
+  tool: '<path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.8-3.8a6 6 0 0 1-7.9 7.9l-6.9 6.9a2.1 2.1 0 0 1-3-3l6.9-6.9a6 6 0 0 1 7.9-7.9z"/>'
 };
 const ic = (n, s = 16, c = '') => `<svg class="ic ${c}" width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICONS[n] || ''}</svg>`;
 
 /* ---------------- Estado ---------------- */
-const KEY = 'serafini_dados_v5', SKEY = 'serafini_sessao', PKEY = 'serafini_periodo';
+const KEY = 'serafini_dados_v6', SKEY = 'serafini_sessao', PKEY = 'serafini_periodo', RKEY = 'serafini_resumo';
 let S, modalOpen = false, pendingRender = false, timer = null;
 
 function seed() {
@@ -76,15 +78,18 @@ function seed() {
   const empresas = [{ id: 'e1', nome: 'Maersk', cnpj: '02.265.718/0001-04', contato: 'Operações Santos' }];
   const motoristas = [{ id: 'm1', nome: 'Carlos Griss', cpf: '123.456.789-01', telefone: '(13) 99811-2200', cnh: 'E', tipo: 'Próprio', status: 'Ativo' }];
   motoristas.forEach(m => Object.assign(m, cnhSeed()[m.id]));
-  const veiculos = [{ id: 'v1', placa: 'ANS-4G47', modelo: 'Scania R450', tipo: 'Cavalo mecânico', proprietario: 'Frota própria' }];
+  const mes = n => { const d = new Date(); d.setDate(1); d.setMonth(d.getMonth() + n); return ymd(d).slice(0, 7); };
+  const veiculos = [{ id: 'v1', placa: 'ANS-4G47', modelo: 'Scania R450', tipo: 'Cavalo mecânico', proprietario: 'Frota própria', ipvaVenc: mes(1) }];
   const usuarios = [{ id: 'u1', nome: 'Leonardo Silva', email: 'leonardo@serafinitransportes.com.br', perfil: 'Diretor / CEO', status: 'Ativo' }];
+  const terceiros = [{ id: 't1', nome: 'Borracharia Dois Irmãos', categoria: 'Borracharia', documento: '18.402.377/0001-56', telefone: '(13) 3361-4420', pix: '18.402.377/0001-56', status: 'Ativo' }];
   const progs = [
     { id: 'p1', tipo: 'escala', data: dia(-1), clienteId: 'e1', lote: '25GX5587HR', vaga: 92, motoristaId: 'm1', placa: 'ANS-4G47',
       valorViagem: 180, valorMotorista: 70, qtdPrevista: 20, qtdViagens: 20, inicio: '15:45', fim: '22:00', status: 'Finalizada', ocorrencia: false, valorOcorrencia: 0 },
-    { id: 'p2', tipo: 'servico', data: dia(0), clienteId: 'e1', lote: '25GX6012HR', vaga: 47, motoristaId: 'm1', placa: 'ANS-4G47',
+    { id: 'p2', tipo: 'escala', data: dia(0), clienteId: 'e1', lote: '25GX6012HR', vaga: 47, motoristaId: 'm1', placa: 'ANS-4G47',
       valorViagem: 210, valorMotorista: 85, qtdPrevista: 12, qtdViagens: 5, inicio: '07:30', fim: '', status: 'Em andamento', ocorrencia: false, valorOcorrencia: 0 }
   ];
   const pagamentos = [{ id: 'pg1', progId: 'p1', data: dia(0), qtd: 20, valorViagem: 70, vale: 200, forma: 'PIX' }];
+  const pagTerceiros = [{ id: 'pt1', terceiroId: 't1', data: dia(-2), servico: 'Troca de 2 pneus e alinhamento', placa: 'ANS-4G47', valor: 680, forma: 'PIX' }];
   const recebimentos = [{ id: 'rc1', progId: 'p1', data: dia(0), valor: 3600, forma: 'TED', status: 'Recebido' }];
   const abastecimentos = [{ id: 'ab1', data: dia(-1), placa: 'ANS-4G47', litros: 180, valorTotal: 1098, local: 'Posto Ipiranga BR-116' }];
   const now = Date.now();
@@ -94,9 +99,17 @@ function seed() {
     { t: now - 55 * 6e4, icon: '💸', msg: 'Pagamento lançado: Carlos Griss — R$ 1.200,00' },
     { t: now - 90 * 6e4, icon: '🚛', msg: 'Carlos Griss iniciou a operação — lote 25GX6012HR' },
     { t: now - 20 * 36e5, icon: '🏁', msg: 'Escala finalizada: Carlos Griss — 20 viagens (R$ 3.600,00)' },
-    { t: now - 22 * 36e5, icon: '⛽', msg: 'Abastecimento registrado: ANS-4G47 — 180 L' }
+    { t: now - 22 * 36e5, icon: '⛽', msg: 'Abastecimento registrado: ANS-4G47 — 180 L' },
+    { t: now - 46 * 36e5, icon: '🔧', msg: 'Serviço pago: Borracharia Dois Irmãos — R$ 680,00' }
   ];
-  return { empresas, motoristas, veiculos, usuarios, progs, pagamentos, recebimentos, abastecimentos, log };
+  return { empresas, motoristas, veiculos, usuarios, terceiros, progs, pagamentos, pagTerceiros, recebimentos, abastecimentos, log };
+}
+function migrate(d) {
+  d.terceiros = d.terceiros || []; d.pagTerceiros = d.pagTerceiros || [];
+  d.progs.forEach(p => { if (p.tipo === 'servico') p.tipo = 'escala'; });
+  d.usuarios.forEach(u => { if (u.perfil === 'Supervisor') u.perfil = 'Diretor / CEO'; });
+  d.motoristas.forEach(m => { if (m.tipo === 'Terceiro') m.tipo = 'Agregado'; const c = cnhSeed()[m.id]; if (!m.cnhNum && c) Object.assign(m, c); });
+  return d;
 }
 function cnhSeed() {
   const em = d => { const x = new Date(); x.setDate(x.getDate() + d); return ymd(x); };
@@ -107,20 +120,42 @@ function cnhSeed() {
   };
 }
 const diasAte = s => { if (!s) return null; const [y, m, d] = s.split('-').map(Number); const h = new Date(); h.setHours(0, 0, 0, 0); return Math.round((new Date(y, m - 1, d) - h) / 864e5); };
-function cnhStatus(m) {
+/* Vencimentos: CNH (data) e IPVA (mês/ano). Alerta quando faltar 1 mês. Nível: -1 sem data, 0 em dia, 1 atenção, 2 vencido */
+const fmes = s => s ? `${s.slice(5, 7)}/${s.slice(0, 4)}` : '—';
+function sitCnh(m) {
   const d = diasAte(m.cnhVal);
-  if (d === null) return '<span style="color:var(--sub)">—</span>';
-  if (d < 0) return `${fdate(m.cnhVal)} ${badge('Vencida', 'bad')}`;
-  if (d <= 30) return `${fdate(m.cnhVal)} ${badge(d === 0 ? 'Vence hoje' : `Vence em ${d} dia${d === 1 ? '' : 's'}`, 'wait')}`;
-  return fdate(m.cnhVal);
+  if (d === null) return ['Não informada', 'no', -1];
+  if (d < 0) return ['Vencida', 'bad', 2];
+  if (d <= 30) return [d === 0 ? 'Vence hoje' : `Vence em ${d} dia${d === 1 ? '' : 's'}`, 'wait', 1];
+  return ['Em dia', 'ok', 0];
 }
+function sitIpva(v) {
+  if (!v.ipvaVenc) return ['Não informado', 'no', -1];
+  const [y, m] = v.ipvaVenc.split('-').map(Number), h = new Date();
+  const d = (y * 12 + m) - (h.getFullYear() * 12 + h.getMonth() + 1);
+  if (d < 0) return ['Vencido', 'bad', 2];
+  if (d === 0) return ['Vence este mês', 'wait', 1];
+  if (d === 1) return ['Vence no próximo mês', 'wait', 1];
+  return ['Em dia', 'ok', 0];
+}
+const vencCell = (txt, s) => s[2] < 0 ? '<span style="color:var(--sub)">—</span>' : s[2] >= 1 ? `${txt} ${badge(s[0], s[1])}` : txt;
+const cnhStatus = m => vencCell(fdate(m.cnhVal), sitCnh(m));
+const ipvaStatus = v => vencCell(fmes(v.ipvaVenc), sitIpva(v));
+function vencs() {
+  return [
+    ...S.veiculos.map(v => ({ key: 'veiculos:' + v.id, tipo: 'Veículo', col: 'veiculos', ref: v, ident: v.placa, sub: v.modelo, doc: 'IPVA', venc: fmes(v.ipvaVenc), sv: v.ipvaVenc ? v.ipvaVenc + '-01' : '9999', sit: sitIpva(v) })),
+    ...S.motoristas.map(m => ({ key: 'motoristas:' + m.id, tipo: 'Motorista', col: 'motoristas', ref: m, ident: m.nome, sub: `Categoria ${m.cnh || '—'}`, doc: 'CNH', venc: fdate(m.cnhVal), sv: m.cnhVal || '9999', sit: sitCnh(m) }))
+  ].sort((a, b) => b.sit[2] - a.sit[2] || a.sv.localeCompare(b.sv));
+}
+const alertas = () => vencs().filter(x => x.sit[2] >= 1);
+const alertTxt = x => `${x.doc} ${x.tipo === 'Veículo' ? x.ident : x.ident.split(' ')[0]}: ${x.sit[0].toLowerCase()}`;
 function load() { const v = store.get(KEY); if (!v) return null; try { return JSON.parse(v); } catch (e) { return null; } }
 function save(msg, icon) {
   if (msg) { S.log.unshift({ t: Date.now(), msg, icon: icon || '•' }); S.log = S.log.slice(0, 40); const f = feedIc(icon); toast(msg, f[1], f[0]); }
   store.set(KEY, JSON.stringify(S));
   render(true);
 }
-window.addEventListener('storage', e => { if (e.key === KEY) { S = load() || S; render(true); } });
+window.addEventListener('storage', e => { if (e.key === KEY) { const d = load(); if (d) S = migrate(d); render(true); } });
 
 /* ---------------- Sessão ---------------- */
 const me = () => S.usuarios.find(u => u.id === store.get(SKEY));
@@ -132,8 +167,9 @@ const PERMISSOES = {
   'Diretor / CEO': 'Acesso total · alimenta e controla todo o sistema',
   Administrador: 'Acesso total',
   Financeiro: 'Pagamentos, abastecimentos e recebimentos',
-  'Operação': 'Programação de escalas e serviços'
+  'Operação': 'Programação de escalas e controle de vencimentos'
 };
+const CAT_TERC = ['Fornecedor', 'Borracharia', 'Oficina mecânica', 'Auto elétrica', 'Lava-jato', 'Outros'];
 
 /* ---------------- Derivados ---------------- */
 const by = (col, id) => S[col].find(x => x.id === id);
@@ -177,7 +213,7 @@ const emptyState = (t, d, icon = 'inbox') => `<div class="empty"><div class="e-i
 function pageHead(group, title, desc, actions = '') {
   return `<div class="ph"><div><nav class="crumb" aria-label="Você está em"><span>Início</span>${group ? `${ic('chevR', 13)}<span>${group}</span>` : ''}${ic('chevR', 13)}<b>${title}</b></nav><h1>${title}</h1>${desc ? `<p>${desc}</p>` : ''}</div><div class="ph-a">${actions}</div></div>`;
 }
-const FEED = { '🚛': ['truck', 'info'], '🏁': ['check', 'ok'], '📦': ['truck', 'info'], '💸': ['wallet', 'warn'], '💰': ['dollar', 'ok'], '🧾': ['receipt', 'info'], '⛽': ['fuel', 'warn'], '🗓️': ['calendar', 'info'], '✅': ['check', 'ok'], '✏️': ['pencil', 'neu'], '🗑️': ['trash', 'red'] };
+const FEED = { '🔧': ['tool', 'warn'], '🚛': ['truck', 'info'], '🏁': ['check', 'ok'], '📦': ['truck', 'info'], '💸': ['wallet', 'warn'], '💰': ['dollar', 'ok'], '🧾': ['receipt', 'info'], '⛽': ['fuel', 'warn'], '🗓️': ['calendar', 'info'], '✅': ['check', 'ok'], '✏️': ['pencil', 'neu'], '🗑️': ['trash', 'red'] };
 const feedIc = i => FEED[i] || ['refresh', 'neu'];
 
 /* ---------------- Toast / modal ---------------- */
@@ -227,8 +263,8 @@ function renderLogin(err, email) {
       <div class="lg-copy"><h2>Gestão operacional e financeira da sua transportadora.</h2>
         <p>Programação de escalas, pagamentos de motoristas, recebimentos e indicadores em tempo real, em um só lugar.</p>
         <ul class="lg-feat">
-          <li><span class="ck">${ic('check', 14)}</span>Programação de escalas e serviços por cliente e lote</li>
-          <li><span class="ck">${ic('check', 14)}</span>Pagamentos de motoristas, terceiros e abastecimentos</li>
+          <li><span class="ck">${ic('check', 14)}</span>Programação de escalas por cliente, lote e vaga</li>
+          <li><span class="ck">${ic('check', 14)}</span>Pagamentos de motoristas, serviços de terceiros e abastecimentos</li>
           <li><span class="ck">${ic('check', 14)}</span>Controle de recebimentos e pendências financeiras</li>
         </ul></div>
       <div class="lg-legal">© 2026 Serafini Transportes. Todos os direitos reservados.</div>
@@ -257,6 +293,8 @@ function renderLogin(err, email) {
     if (!location.hash || location.hash === '#/tv') location.hash = '#/dashboard';
     boot();
     toast(`Bem-vindo(a), ${u.nome.split(' ')[0]}!`, 'ok', 'check');
+    const al = alertas();
+    if (al.length) setTimeout(() => toast(`${al.length} vencimento${al.length === 1 ? '' : 's'} precisa${al.length === 1 ? '' : 'm'} de atenção. Veja em Controle.`, 'warn', 'alert'), 600);
   };
 }
 function logout() {
@@ -266,11 +304,12 @@ function logout() {
 
 /* ---------------- Estrutura (topo e menu) ---------------- */
 const NAV = [
-  { label: 'Dashboard', icon: 'grid', r: 'dashboard' },
-  { label: 'Programação', icon: 'calendar', items: [['escala', 'Programar escala', 'Escalas de motoristas por cliente', 'calendar'], ['servico', 'Programar serviço', 'Serviços avulsos por lote', 'truck']] },
-  { label: 'Pagamentos', icon: 'wallet', items: [['pag-motorista', 'Pagamento de motoristas', 'Motoristas da frota própria', 'user'], ['pag-terceiros', 'Pagamento de terceiros', 'Agregados e terceiros', 'users'], ['abastecimentos', 'Abastecimentos', 'Combustível por veículo', 'fuel']] },
+  { label: 'Dashboard', icon: 'grid', r: 'dashboard', desc: 'Visão geral e indicadores' },
+  { label: 'Programação', icon: 'calendar', items: [['escala', 'Programar escala', 'Escalas de motoristas por cliente', 'calendar']] },
+  { label: 'Pagamentos', icon: 'wallet', items: [['pag-motorista', 'Pagamento de motoristas', 'Motoristas próprios e agregados', 'user'], ['pag-terceiros', 'Pagamento de terceiros', 'Serviços de prestadores', 'tool'], ['abastecimentos', 'Abastecimentos', 'Combustível por veículo', 'fuel']] },
   { label: 'A receber', icon: 'receipt', items: [['rpas', "RPA's", 'Recebimentos de clientes', 'receipt']] },
-  { label: 'Cadastros', icon: 'folder', items: [['motoristas', 'Motorista', 'Equipe própria e terceiros', 'user'], ['veiculos', 'Veículo', 'Frota e placas', 'truck'], ['empresas', 'Empresa', 'Clientes atendidos', 'building'], ['usuarios', 'Usuário', 'Acessos ao sistema', 'users']] }
+  { label: 'Cadastros', icon: 'folder', items: [['motoristas', 'Motorista', 'Equipe própria e agregados', 'user'], ['veiculos', 'Veículo', 'Frota e placas', 'truck'], ['empresas', 'Empresa', 'Clientes atendidos', 'building'], ['terceiros', 'Terceiro', 'Fornecedores e prestadores', 'tool'], ['usuarios', 'Usuário', 'Acessos ao sistema', 'users']] },
+  { label: 'Controle', icon: 'shield', r: 'controle', group: 'Vencimentos', desc: 'IPVA dos veículos e CNH dos motoristas', count: () => alertas().length }
 ];
 const userIc = (cls = '') => `<span class="u-ic ${cls}"><img src="img/icone-usuario.png" alt=""></span>`;
 function renderShell() {
@@ -307,14 +346,16 @@ function renderShell() {
 }
 function renderNav(route) {
   const on = it => it.r === route || (it.items || []).some(i => i[0] === route);
-  const link = i => i === '-' ? '' : `<a class="dd-a ${i[0] === route ? 'on' : ''}" href="#/${i[0]}"><span class="ti">${ic(i[3], 16)}</span><span><b>${i[1]}</b><small>${i[2]}</small></span></a>`;
+  const cnt = it => { const n = it.count ? it.count() : 0; return n ? `<span class="nb" title="${n} vencimento(s) precisam de atenção">${n}</span>` : ''; };
+  const link = (i, n = '') => i === '-' ? '' : `<a class="dd-a ${i[0] === route ? 'on' : ''}" href="#/${i[0]}"><span class="ti">${ic(i[3], 16)}</span><span><b>${i[1]}${n}</b><small>${i[2]}</small></span></a>`;
   const simple = i => i === '-' ? '<div class="dd-sep"></div>' : `<a class="dd-s ${i[0] === route ? 'on' : ''}" href="#/${i[0]}">${i[1]}</a>`;
   $('#navLinks').innerHTML = NAV.map(it => it.r
-    ? `<div class="nav-item ${on(it) ? 'active' : ''}"><a class="nav-link" href="#/${it.r}">${it.label}</a></div>`
+    ? `<div class="nav-item ${on(it) ? 'active' : ''}"><a class="nav-link" href="#/${it.r}">${it.label}${cnt(it)}</a></div>`
     : `<div class="nav-item ${on(it) ? 'active' : ''}"><button class="nav-link" type="button" aria-haspopup="true">${it.label}</button><div class="dd"><div class="dd-in">${it.items.map(simple).join('')}</div></div></div>`).join('');
   $$('#navLinks .dd-s').forEach(a => a.addEventListener('click', () => a.blur()));
+  if ($('#burger')) $('#burger').classList.toggle('has-al', alertas().length > 0);
   $('#mnav').innerHTML = `<div class="mnav-bg" data-close></div><div class="mnav-p"><div class="mnav-h"><div class="brand"><img src="img/logo-simbolo.png" alt="" style="width:32px;height:32px"><div class="wm"><b>SERAFINI</b><span>TRANSPORTES</span></div></div><button data-close aria-label="Fechar menu">${ic('x', 20)}</button></div>
-    <div class="mnav-b">${NAV.map(it => it.r ? link([it.r, it.label, 'Visão geral e indicadores', it.icon]) : `<div class="mnav-g">${it.label}</div>${it.items.map(link).join('')}`).join('')}
+    <div class="mnav-b">${NAV.map(it => it.r ? (it.group ? `<div class="mnav-g">${it.label}</div>` : '') + link([it.r, it.group || it.label, it.desc, it.icon], cnt(it)) : `<div class="mnav-g">${it.label}</div>${it.items.map(i => link(i)).join('')}`).join('')}
     <div class="mnav-g">Apresentação</div>${link(['tv', 'Modo TV', 'Painel em tela cheia', 'tv'])}</div></div>`;
   $$('#mnav [data-close], #mnav a').forEach(el => el.addEventListener('click', () => $('#mnav').classList.remove('open')));
 }
@@ -337,6 +378,22 @@ function profile() {
 }
 
 /* ---------------- Listagens (CRUD) ---------------- */
+/* Resumo (cards) recolhível; a preferência fica salva neste navegador */
+function sumBlock(cards) {
+  if (!cards.length) return '';
+  const off = store.get(RKEY) === '0';
+  return `<section class="sum ${off ? 'off' : ''}"><div class="sum-h"><span>Resumo</span><i></i><button class="sum-t" id="sumT" type="button" aria-expanded="${!off}" title="${off ? 'Mostrar resumo' : 'Ocultar resumo'}">${ic('chev', 15)}<em>${off ? 'Mostrar' : 'Ocultar'}</em></button></div><div class="stats">${cards.map(statCard).join('')}</div></section>`;
+}
+function bindSum() {
+  const b = $('#sumT'); if (!b) return;
+  b.onclick = () => {
+    const off = b.closest('.sum').classList.toggle('off');
+    store.set(RKEY, off ? '0' : '1');
+    b.setAttribute('aria-expanded', !off); b.title = off ? 'Mostrar resumo' : 'Ocultar resumo';
+    $('em', b).textContent = off ? 'Mostrar' : 'Ocultar';
+  };
+}
+const noteBox = h => `<div class="note">${ic('info', 17)}<div>${h}</div></div>`;
 let ls = { key: null, q: '', f: '', day: '', s: -1, d: 1, sel: new Set() };
 const cellTxt = (c, r) => c.render ? stripHtml(String(c.render(r))) : String(r[c.k] ?? '');
 function crud(cfg) {
@@ -348,7 +405,8 @@ function crud(cfg) {
   const selOn = !!cfg.select && ls.selMode;
   $('#app').innerHTML = `
     ${pageHead(cfg.group, cfg.title, cfg.desc, `<button class="btn btn-pri" id="novo">${ic('plus')}${cfg.newText}</button>`)}
-    ${sum.length ? `<div class="stats">${sum.map(statCard).join('')}</div>` : ''}
+    ${cfg.note ? noteBox(cfg.note) : ''}
+    ${sumBlock(sum)}
     <div class="panel">
       <div class="toolbar">
         <div class="tb-l"><div class="search">${ic('search')}<input id="q" placeholder="Buscar ${cfg.searchPh || 'registros'}..." value="${esc(ls.q)}" aria-label="Buscar"></div>
@@ -399,6 +457,7 @@ function crud(cfg) {
     syncSel();
   };
   view();
+  bindSum();
   $('#q').oninput = e => { ls.q = e.target.value; view(); };
   if (cfg.filter) $('#flt').onchange = e => { ls.f = e.target.value; view(); };
   if (cfg.dayFilter) {
@@ -473,7 +532,7 @@ async function escalaImagem(tipo, rows) {
   });
 
   // tabela
-  const cols = [...(multi ? [['Data', 92, r => fdate(r.data).slice(0, 5)]] : []), ['Início', 82, r => r.inicio || '—'], ['Motorista', 0, r => nome('motoristas', r.motoristaId)], ['Placa', 116, r => r.placa], ['Cliente', 150, r => nome('empresas', r.clienteId)], ['Lote', 142, r => r.lote], ['Vaga', 68, r => r.vaga || '—'], ['Viagens', 90, r => r.qtdPrevista]];
+  const cols = [...(multi ? [['Data', 92, r => fdate(r.data).slice(0, 5)]] : []), ['Início', 82, r => r.inicio || '—'], ['Motorista', 0, r => nome('motoristas', r.motoristaId)], ['Placa', 116, r => r.placa], ['Cliente', 150, r => nome('empresas', r.clienteId)], ['Lote', 142, r => r.lote], ['Vaga', 84, r => r.vaga || '—'], ['Viagens', 90, r => r.qtdPrevista]];
   const fixed = sumBy(cols, x => x[1]); cols.forEach(x => { if (!x[1]) x[1] = W - 2 * P - fixed; });
   let ty = HEAD + SUM;
   const TW = W - 2 * P, TB = TH + rows.length * RH;
@@ -489,6 +548,12 @@ async function escalaImagem(tipo, rows) {
     let x = P;
     cols.forEach(([l, w, f], j) => {
       const last = j === cols.length - 1, forte = l === 'Motorista' || l === 'Início' || l === 'Data';
+      if (l === 'Vaga' && r.vaga) {
+        c.font = F(700, 18); const t = String(r.vaga), tw = Math.max(40, c.measureText(t).width + 20);
+        roundRect(c, x + 14, ty + 15, tw, 32, 8); c.fillStyle = '#002147'; c.fill();
+        c.fillStyle = '#ffffff'; c.textAlign = 'center'; c.fillText(t, x + 14 + tw / 2, ty + 38); c.textAlign = 'left';
+        x += w; return;
+      }
       c.font = F(forte ? 600 : 500, 17); c.fillStyle = forte ? '#0f1b2d' : '#344257';
       c.textAlign = last ? 'right' : 'left';
       c.fillText(fit(f(r), w - 30), last ? x + w - 18 : x + 18, ty + 38);
@@ -520,6 +585,7 @@ async function escalaImagem(tipo, rows) {
 function del(cfg, it) {
   if (!it) return;
   if (cfg.col === 'usuarios' && me() && it.id === me().id) return toast('Você não pode excluir o próprio usuário enquanto está conectado.', 'warn', 'alert');
+  if (cfg.col === 'terceiros' && S.pagTerceiros.some(g => g.terceiroId === it.id)) return toast('Este terceiro tem pagamentos lançados. Marque-o como Inativo em vez de excluir.', 'warn', 'alert');
   confirmBox('Excluir registro?', cfg.col === 'progs' ? 'A programação e os pagamentos e recebimentos vinculados a ela serão excluídos. Esta ação não pode ser desfeita.' : 'Esta ação não pode ser desfeita.', 'Excluir', () => {
     S[cfg.col] = S[cfg.col].filter(x => x.id !== it.id);
     if (cfg.col === 'progs') ['pagamentos', 'recebimentos'].forEach(c => S[c] = S[c].filter(x => x.progId !== it.id));
@@ -552,7 +618,7 @@ function form(cfg, item, preset) {
     return `<label class="fld ${f.full ? 'full' : ''}">${f.label}${f.req ? '<span class="req">*</span>' : ''}${input}</label>`;
   }).join('');
   openModal({ title: item ? cfg.editText : cfg.newText, sub: item ? 'Altere as informações e salve.' : 'Preencha as informações abaixo. Campos com * são obrigatórios.',
-    body: `<form id="f" novalidate><div class="fgrid">${fld}</div></form>`,
+    body: `${cfg.formNote ? noteBox(cfg.formNote) : ''}<form id="f" novalidate><div class="fgrid">${fld}</div></form>`,
     footer: `<button class="btn btn-sec" type="button" data-x>Cancelar</button><button class="btn btn-pri" form="f" type="submit">${ic('check', 15)}Salvar</button>` });
   const fe = $('#f');
   const read = () => {
@@ -585,12 +651,12 @@ function progDetail(p) {
   const pgm = S.pagamentos.find(g => g.progId === p.id), rec = S.recebimentos.find(g => g.progId === p.id);
   const pc = pct(p.qtdViagens, p.qtdPrevista);
   const step = (lbl, done, txt) => `<div class="step ${done ? 'done' : ''}"><span class="s-ic">${ic(done ? 'check' : 'clock', 15)}</span><div><span>${lbl}</span><b>${done ? 'Finalizado' : esc(txt)}</b></div></div>`;
-  openModal({ size: 'lg', title: `Lote ${p.lote}`, sub: `${p.tipo === 'escala' ? 'Escala' : 'Serviço'} · ${fdate(p.data)} · ${esc(nome('empresas', p.clienteId))}`,
+  openModal({ size: 'lg', title: `Lote ${p.lote}`, sub: `Escala · Vaga ${esc(p.vaga || '—')} · ${fdate(p.data)} · ${esc(nome('empresas', p.clienteId))}`,
     body: `
       <div class="dt-badges">${badge(p.status, stProg(p.status))}${badge('A pagar: ' + pg, pgc)}${badge('A receber: ' + rc, rcc)}${p.ocorrencia ? badge('Com ocorrência', 'bad') : ''}</div>
       <div class="dl">
         <div><span>Cliente</span><b>${esc(nome('empresas', p.clienteId))}</b></div><div><span>Motorista</span><b>${esc(nome('motoristas', p.motoristaId))}</b></div>
-        <div><span>Placa</span><b>${esc(p.placa)}</b></div><div><span>Vaga</span><b>${esc(p.vaga)}</b></div>
+        <div><span>Placa</span><b>${esc(p.placa)}</b></div><div><span>Vaga</span><b>${vagaTag(p)}</b></div>
         <div><span>Valor da viagem (cliente)</span><b>${brl(p.valorViagem)}</b></div><div><span>Valor da viagem (motorista)</span><b>${brl(p.valorMotorista)}</b></div>
         <div><span>Início</span><b>${p.inicio || '—'}</b></div><div><span>Fim</span><b>${p.fim || '—'}</b></div>
       </div>
@@ -605,22 +671,23 @@ function progDetail(p) {
       ${p.qtdViagens > 0 && pg !== 'Pago' ? `<button class="btn btn-sec" id="dtPag">${ic('wallet', 15)}Lançar pagamento</button>` : ''}
       ${p.qtdViagens > 0 && rc !== 'Recebido' ? `<button class="btn btn-sec" id="dtRec">${ic('receipt', 15)}${rec ? 'Editar recebimento' : 'Lançar recebimento'}</button>` : ''}
       <button class="btn btn-pri" id="dtEdit">${ic('pencil', 15)}Editar programação</button>` });
-  $('#dtEdit').onclick = () => { closeModal(); form(progCfg(p.tipo), p); };
-  if ($('#dtPag')) $('#dtPag').onclick = () => { closeModal(); form(pagCfg((by('motoristas', p.motoristaId) || {}).tipo || 'Próprio'), null, { progId: p.id, qtd: p.qtdViagens, valorViagem: p.valorMotorista }); };
+  $('#dtEdit').onclick = () => { closeModal(); form(progCfg(), p); };
+  if ($('#dtPag')) $('#dtPag').onclick = () => { closeModal(); form(pagCfg, null, { progId: p.id, qtd: p.qtdViagens, valorViagem: p.valorMotorista }); };
   if ($('#dtRec')) $('#dtRec').onclick = () => { closeModal(); rec ? form(recCfg, rec) : form(recCfg, null, { progId: p.id, valor: Math.max(0, total(p) - recProg(p.id)), status: 'Recebido' }); };
 }
 
 /* ---------------- Configuração das telas ---------------- */
 const colData = { label: 'Data', render: r => fdate(r.data), sv: r => r.data };
-const progCfg = tipo => ({
-  col: 'progs', group: 'Programação', title: tipo === 'escala' ? 'Programar escala' : 'Programar serviço',
-  newText: tipo === 'escala' ? 'Nova escala' : 'Novo serviço', editText: tipo === 'escala' ? 'Editar escala' : 'Editar serviço', searchPh: 'por lote, cliente, motorista ou placa',
+const vagaTag = p => p.vaga ? `<span class="vaga" title="Vaga ${esc(p.vaga)}">${esc(p.vaga)}</span>` : '<span style="color:var(--sub)">—</span>';
+const progCfg = (tipo = 'escala') => ({
+  col: 'progs', group: 'Programação', title: 'Programar escala',
+  newText: 'Nova escala', editText: 'Editar escala', searchPh: 'por vaga, lote, cliente, motorista ou placa',
   desc: 'Acompanhe cada operação da programação até o pagamento e o recebimento.',
   rows: () => S.progs.filter(p => p.tipo === tipo).sort((a, b) => b.data.localeCompare(a.data)),
   summary: rs => [['Programações', num(rs.length), 'calendar', 'Total cadastrado'], ['Em andamento', num(rs.filter(p => p.status === 'Em andamento').length), 'truck', 'Operações ativas agora'], ['Finalizadas', num(rs.filter(p => p.status === 'Finalizada').length), 'check', `${pct(rs.filter(p => p.status === 'Finalizada').length, rs.length)}% do total`], ['Total produzido', brl(sumBy(rs, total)), 'dollar', `${num(sumBy(rs, p => p.qtdViagens))} viagens realizadas`]],
   filter: { label: 'Status', get: p => p.status, options: ['Programada', 'Em andamento', 'Finalizada'] },
   cols: [
-    colData, { label: 'Cliente', render: p => esc(nome('empresas', p.clienteId)) }, { label: 'Lote', k: 'lote', cls: 'mono' },
+    colData, { label: 'Vaga', sv: p => +p.vaga || 0, render: vagaTag }, { label: 'Cliente', render: p => esc(nome('empresas', p.clienteId)) }, { label: 'Lote', k: 'lote', cls: 'mono' },
     { label: 'Motorista', render: p => person(nome('motoristas', p.motoristaId)) }, { label: 'Placa', k: 'placa', cls: 'mono' },
     { label: 'Viagens', sv: p => p.qtdViagens, render: p => { const v = pct(p.qtdViagens, p.qtdPrevista); return `<div class="prog"><div class="prog-t"><span>${p.qtdViagens}/${p.qtdPrevista}</span><span>${v}%</span></div>${meter(v, v >= 100)}</div>`; } },
     { label: 'Total produzido', r: 1, cls: 'strong', sv: total, render: p => brl(total(p)) },
@@ -648,14 +715,13 @@ const progCfg = tipo => ({
   select: { label: 'Gerar imagem', run: rows => escalaImagem(tipo, rows) },
   detail: progDetail
 });
-const pagCfg = tipo => {
-  const ok = id => { const p = by('progs', id); return p && (by('motoristas', p.motoristaId) || {}).tipo === tipo; };
+const pagCfg = (() => {
+  const ok = id => !!by('progs', id);
   const mot = g => nome('motoristas', (by('progs', g.progId) || {}).motoristaId);
-  const prop = tipo === 'Próprio';
   return {
-    col: 'pagamentos', group: 'Pagamentos', title: prop ? 'Pagamento de motoristas' : 'Pagamento de terceiros',
+    col: 'pagamentos', group: 'Pagamentos', title: 'Pagamento de motoristas',
     newText: 'Novo pagamento', editText: 'Editar pagamento', searchPh: 'por motorista ou lote',
-    desc: prop ? 'Pagamentos aos motoristas da frota própria. Cada lançamento atualiza o status da programação.' : 'Pagamentos a agregados e terceiros. Cada lançamento atualiza o status da programação.',
+    desc: 'Pagamentos aos motoristas próprios e agregados, por lote. Cada lançamento atualiza o status da programação.',
     rows: () => S.pagamentos.filter(g => ok(g.progId)).sort((a, b) => b.data.localeCompare(a.data)),
     summary: rs => [['Pagamentos', num(rs.length), 'receipt', 'Lançamentos registrados'], ['Total pago (líquido)', brl(sumBy(rs, pgTotal)), 'wallet', 'Já descontados os vales'], ['Vales adiantados', brl(sumBy(rs, g => g.vale)), 'dollar', `${rs.filter(g => g.vale > 0).length} pagamento(s) com vale`], ['Média por pagamento', brl(rs.length ? sumBy(rs, pgTotal) / rs.length : 0), 'trend', 'Valor líquido médio']],
     filter: { label: 'Forma', get: g => g.forma, options: ['PIX', 'TED', 'Dinheiro'] },
@@ -675,6 +741,33 @@ const pagCfg = tipo => {
     onChange: (v, n) => { if (n !== 'progId') return {}; const p = by('progs', v.progId); return p ? { qtd: p.qtdViagens, valorViagem: p.valorMotorista } : {}; },
     log: o => `Pagamento lançado: ${mot(o)} — ${brl(pgTotal(o))}`
   };
+})();
+const tercAtivos = v => S.terceiros.filter(t => t.status !== 'Inativo' || t.id === v.terceiroId);
+const pagTercCfg = {
+  col: 'pagTerceiros', group: 'Pagamentos', title: 'Pagamento de terceiros', newText: 'Novo pagamento', editText: 'Editar pagamento de serviço', searchPh: 'por terceiro, serviço ou placa',
+  desc: 'Pagamentos a fornecedores e prestadores cadastrados em Cadastros › Terceiro.',
+  note: '<b>Somente pagamentos de serviços.</b> Use esta tela para borracharia, oficina, fornecedores e outros prestadores. Pagamentos de motoristas ficam em <a href="#/pag-motorista">Pagamento de motoristas</a>.',
+  formNote: 'Somente pagamentos de <b>serviços</b> prestados por terceiros. Não é preciso informar lote.',
+  rows: () => [...S.pagTerceiros].sort((a, b) => b.data.localeCompare(a.data)),
+  summary: rs => { const t = sumBy(rs, g => g.valor); return [['Serviços pagos', num(rs.length), 'tool', 'Lançamentos registrados'], ['Total pago', brl(t), 'wallet', 'Em serviços de terceiros'], ['Prestadores', num(new Set(rs.map(g => g.terceiroId)).size), 'users', 'Terceiros diferentes pagos'], ['Média por serviço', brl(rs.length ? t / rs.length : 0), 'trend', 'Valor médio']]; },
+  filter: { label: 'Categoria', get: g => (by('terceiros', g.terceiroId) || {}).categoria, options: CAT_TERC },
+  cols: [
+    { label: 'Data de pagamento', render: g => fdate(g.data), sv: g => g.data },
+    { label: 'Terceiro', sv: g => nome('terceiros', g.terceiroId), render: g => person(nome('terceiros', g.terceiroId)) },
+    { label: 'Categoria', render: g => esc((by('terceiros', g.terceiroId) || {}).categoria || '—') },
+    { label: 'Serviço', k: 'servico' },
+    { label: 'Veículo', cls: 'mono', render: g => g.placa ? esc(g.placa) : '<span style="color:var(--sub)">—</span>' },
+    { label: 'Valor', r: 1, cls: 'strong', sv: g => g.valor, render: g => brl(g.valor) }, { label: 'Forma', k: 'forma' }
+  ],
+  fields: [
+    { k: 'terceiroId', label: 'Terceiro', type: 'select', req: 1, full: 1, options: v => tercAtivos(v).map(t => [t.id, `${t.nome} · ${t.categoria}`]) },
+    { k: 'servico', label: 'Descrição do serviço', req: 1, full: 1, ph: 'Ex.: troca de 2 pneus e alinhamento' },
+    { k: 'data', label: 'Data de pagamento', type: 'date', req: 1 }, { k: 'valor', label: 'Valor', type: 'number', req: 1 },
+    { k: 'forma', label: 'Forma de pagamento', type: 'select', req: 1, options: ['PIX', 'TED', 'Boleto', 'Dinheiro'] },
+    { k: 'placa', label: 'Veículo atendido (opcional)', type: 'select', options: () => S.veiculos.map(v => [v.placa, `${v.placa} · ${v.modelo}`]) }
+  ],
+  defaults: () => ({ data: ymd(new Date()), forma: 'PIX' }),
+  log: o => `Serviço pago: ${nome('terceiros', o.terceiroId)} — ${brl(o.valor)}`
 };
 const abastCfg = {
   col: 'abastecimentos', group: 'Pagamentos', title: 'Abastecimentos', newText: 'Novo abastecimento', editText: 'Editar abastecimento', searchPh: 'por placa ou posto',
@@ -706,18 +799,18 @@ const recCfg = {
 };
 const cadastros = {
   motoristas: {
-    col: 'motoristas', group: 'Cadastros', title: 'Motoristas', newText: 'Novo motorista', editText: 'Editar motorista', searchPh: 'por nome, CPF ou telefone', desc: 'Motoristas da frota própria e terceiros que podem ser programados.',
-    summary: rs => [['Motoristas', num(rs.length), 'users', 'Total cadastrado'], ['Frota própria', num(rs.filter(m => m.tipo === 'Próprio').length), 'user', 'Motoristas próprios'], ['Terceiros', num(rs.filter(m => m.tipo === 'Terceiro').length), 'users', 'Agregados e terceiros'], ['Ativos', num(rs.filter(m => m.status === 'Ativo').length), 'check', 'Disponíveis para programação']],
-    filter: { label: 'Tipo', get: m => m.tipo, options: ['Próprio', 'Terceiro'] },
+    col: 'motoristas', group: 'Cadastros', title: 'Motoristas', newText: 'Novo motorista', editText: 'Editar motorista', searchPh: 'por nome, CPF ou telefone', desc: 'Motoristas próprios e agregados que podem ser programados. A validade da CNH alimenta a aba Controle.',
+    summary: rs => [['Motoristas', num(rs.length), 'users', 'Total cadastrado'], ['Frota própria', num(rs.filter(m => m.tipo === 'Próprio').length), 'user', 'Motoristas próprios'], ['Agregados', num(rs.filter(m => m.tipo === 'Agregado').length), 'users', 'Motoristas agregados'], ['Ativos', num(rs.filter(m => m.status === 'Ativo').length), 'check', 'Disponíveis para programação']],
+    filter: { label: 'Tipo', get: m => m.tipo, options: ['Próprio', 'Agregado'] },
     cols: [{ label: 'Nome', sv: m => m.nome, render: m => person(m.nome) }, { label: 'CPF', k: 'cpf' }, { label: 'Telefone', k: 'telefone' }, { label: 'CNH', sv: m => m.cnhNum || '', render: m => m.cnhNum ? `${esc(m.cnhNum)} <span style="color:var(--mut)">· ${esc(m.cnh || '—')}</span>` : `<span style="color:var(--sub)">Cat. ${esc(m.cnh || '—')}</span>` }, { label: 'Validade da CNH', sv: m => m.cnhVal || '', render: cnhStatus }, { label: 'Tipo', render: m => badge(m.tipo, m.tipo === 'Próprio' ? 'run' : 'no') }, { label: 'Viagens', r: 1, sv: m => sumBy(S.progs.filter(p => p.motoristaId === m.id), p => p.qtdViagens), render: m => num(sumBy(S.progs.filter(p => p.motoristaId === m.id), p => p.qtdViagens)) }, { label: 'Status', render: m => badge(m.status, m.status === 'Ativo' ? 'ok' : 'no') }],
-    fields: [{ k: 'nome', label: 'Nome completo', req: 1, full: 1 }, { k: 'cpf', label: 'CPF', req: 1, ph: '000.000.000-00' }, { k: 'telefone', label: 'Telefone', ph: '(00) 00000-0000' }, { k: 'cnhNum', label: 'Número da CNH', req: 1, ph: '00000000000' }, { k: 'cnh', label: 'Categoria da CNH', type: 'select', req: 1, options: ['C', 'D', 'E'] }, { k: 'cnhVal', label: 'Validade da CNH', type: 'date', req: 1 }, { k: 'tipo', label: 'Tipo', type: 'select', req: 1, options: ['Próprio', 'Terceiro'] }, { k: 'status', label: 'Status', type: 'select', req: 1, options: ['Ativo', 'Inativo'] }],
+    fields: [{ k: 'nome', label: 'Nome completo', req: 1, full: 1 }, { k: 'cpf', label: 'CPF', req: 1, ph: '000.000.000-00' }, { k: 'telefone', label: 'Telefone', ph: '(00) 00000-0000' }, { k: 'cnhNum', label: 'Número da CNH', req: 1, ph: '00000000000' }, { k: 'cnh', label: 'Categoria da CNH', type: 'select', req: 1, options: ['C', 'D', 'E'] }, { k: 'cnhVal', label: 'Validade da CNH', type: 'date', req: 1 }, { k: 'tipo', label: 'Tipo', type: 'select', req: 1, options: ['Próprio', 'Agregado'] }, { k: 'status', label: 'Status', type: 'select', req: 1, options: ['Ativo', 'Inativo'] }],
     defaults: () => ({ tipo: 'Próprio', status: 'Ativo', cnh: 'E' }), log: (o, n) => `${n ? 'Motorista cadastrado' : 'Motorista atualizado'}: ${o.nome}`
   },
   veiculos: {
-    col: 'veiculos', group: 'Cadastros', title: 'Veículos', newText: 'Novo veículo', editText: 'Editar veículo', searchPh: 'por placa, modelo ou proprietário', desc: 'Frota própria e veículos de terceiros.',
-    summary: rs => [['Veículos', num(rs.length), 'truck', 'Total cadastrado'], ['Frota própria', num(rs.filter(v => v.proprietario === 'Frota própria').length), 'building', 'Veículos da empresa'], ['De terceiros', num(rs.filter(v => v.proprietario !== 'Frota própria').length), 'users', 'Agregados'], ['Combustível', brl(sumBy(S.abastecimentos, a => a.valorTotal)), 'fuel', 'Total abastecido']],
-    cols: [{ label: 'Placa', k: 'placa', cls: 'mono' }, { label: 'Modelo', k: 'modelo' }, { label: 'Tipo', k: 'tipo' }, { label: 'Proprietário', k: 'proprietario' }, { label: 'Abastecimentos', r: 1, sv: v => S.abastecimentos.filter(a => a.placa === v.placa).length, render: v => num(S.abastecimentos.filter(a => a.placa === v.placa).length) }, { label: 'Litros', r: 1, sv: v => sumBy(S.abastecimentos.filter(a => a.placa === v.placa), a => a.litros), render: v => num(sumBy(S.abastecimentos.filter(a => a.placa === v.placa), a => a.litros)) + ' L' }],
-    fields: [{ k: 'placa', label: 'Placa', req: 1, ph: 'AAA-0A00' }, { k: 'modelo', label: 'Modelo', req: 1 }, { k: 'tipo', label: 'Tipo', type: 'select', options: ['Cavalo mecânico', 'Carreta', 'Truck', 'VUC'] }, { k: 'proprietario', label: 'Proprietário', ph: 'Frota própria ou nome do terceiro' }],
+    col: 'veiculos', group: 'Cadastros', title: 'Veículos', newText: 'Novo veículo', editText: 'Editar veículo', searchPh: 'por placa, modelo ou proprietário', desc: 'Frota própria e veículos de agregados. O mês de vencimento do IPVA alimenta a aba Controle.',
+    summary: rs => [['Veículos', num(rs.length), 'truck', 'Total cadastrado'], ['Frota própria', num(rs.filter(v => v.proprietario === 'Frota própria').length), 'building', 'Veículos da empresa'], ['IPVA em atenção', num(rs.filter(v => sitIpva(v)[2] >= 1).length), 'alert', 'Vencido ou vence em até 1 mês'], ['Combustível', brl(sumBy(S.abastecimentos, a => a.valorTotal)), 'fuel', 'Total abastecido']],
+    cols: [{ label: 'Placa', k: 'placa', cls: 'mono' }, { label: 'Modelo', k: 'modelo' }, { label: 'Tipo', k: 'tipo' }, { label: 'Proprietário', k: 'proprietario' }, { label: 'Vencimento do IPVA', sv: v => v.ipvaVenc || '', render: ipvaStatus }, { label: 'Abastecimentos', r: 1, sv: v => S.abastecimentos.filter(a => a.placa === v.placa).length, render: v => num(S.abastecimentos.filter(a => a.placa === v.placa).length) }, { label: 'Litros', r: 1, sv: v => sumBy(S.abastecimentos.filter(a => a.placa === v.placa), a => a.litros), render: v => num(sumBy(S.abastecimentos.filter(a => a.placa === v.placa), a => a.litros)) + ' L' }],
+    fields: [{ k: 'placa', label: 'Placa', req: 1, ph: 'AAA-0A00' }, { k: 'modelo', label: 'Modelo', req: 1 }, { k: 'tipo', label: 'Tipo', type: 'select', options: ['Cavalo mecânico', 'Carreta', 'Truck', 'VUC'] }, { k: 'proprietario', label: 'Proprietário', ph: 'Frota própria ou nome do agregado' }, { k: 'ipvaVenc', label: 'Vencimento do IPVA (mês/ano)', type: 'month', req: 1, ph: 'AAAA-MM' }],
     defaults: () => ({ tipo: 'Cavalo mecânico', proprietario: 'Frota própria' }), log: (o, n) => `${n ? 'Veículo cadastrado' : 'Veículo atualizado'}: ${o.placa}`
   },
   empresas: {
@@ -726,6 +819,18 @@ const cadastros = {
     cols: [{ label: 'Empresa', sv: e => e.nome, render: e => person(e.nome) }, { label: 'CNPJ', k: 'cnpj' }, { label: 'Contato', k: 'contato' }, { label: 'Programações', r: 1, sv: e => S.progs.filter(p => p.clienteId === e.id).length, render: e => num(S.progs.filter(p => p.clienteId === e.id).length) }, { label: 'Faturamento', r: 1, cls: 'strong', sv: e => sumBy(S.progs.filter(p => p.clienteId === e.id), total), render: e => brl(sumBy(S.progs.filter(p => p.clienteId === e.id), total)) }],
     fields: [{ k: 'nome', label: 'Razão social / nome fantasia', req: 1, full: 1 }, { k: 'cnpj', label: 'CNPJ', ph: '00.000.000/0000-00' }, { k: 'contato', label: 'Contato' }],
     log: (o, n) => `${n ? 'Empresa cadastrada' : 'Empresa atualizada'}: ${o.nome}`
+  },
+  terceiros: {
+    col: 'terceiros', group: 'Cadastros', title: 'Terceiros', newText: 'Novo terceiro', editText: 'Editar terceiro', searchPh: 'por nome, categoria ou documento', desc: 'Fornecedores, borracharias, oficinas e outros prestadores de serviço. Os pagamentos ficam em Pagamentos › Pagamento de terceiros.',
+    summary: rs => { const pago = id => sumBy(S.pagTerceiros.filter(g => g.terceiroId === id), g => g.valor); return [['Terceiros', num(rs.length), 'tool', 'Prestadores cadastrados'], ['Ativos', num(rs.filter(t => t.status !== 'Inativo').length), 'check', 'Disponíveis para pagamento'], ['Total pago', brl(sumBy(rs, t => pago(t.id))), 'wallet', 'Em serviços'], ['Serviços pagos', num(S.pagTerceiros.length), 'receipt', 'Lançamentos registrados']]; },
+    filter: { label: 'Categoria', get: t => t.categoria, options: CAT_TERC },
+    cols: [
+      { label: 'Nome', sv: t => t.nome, render: t => person(t.nome) }, { label: 'Categoria', k: 'categoria' }, { label: 'CPF / CNPJ', k: 'documento' }, { label: 'Telefone', k: 'telefone' }, { label: 'Chave PIX', k: 'pix' },
+      { label: 'Total pago', r: 1, cls: 'strong', sv: t => sumBy(S.pagTerceiros.filter(g => g.terceiroId === t.id), g => g.valor), render: t => brl(sumBy(S.pagTerceiros.filter(g => g.terceiroId === t.id), g => g.valor)) },
+      { label: 'Status', render: t => badge(t.status || 'Ativo', t.status === 'Inativo' ? 'no' : 'ok') }
+    ],
+    fields: [{ k: 'nome', label: 'Nome / razão social', req: 1, full: 1 }, { k: 'categoria', label: 'Categoria', type: 'select', req: 1, options: CAT_TERC }, { k: 'documento', label: 'CPF ou CNPJ', ph: '00.000.000/0000-00' }, { k: 'telefone', label: 'Telefone', ph: '(00) 00000-0000' }, { k: 'pix', label: 'Chave PIX' }, { k: 'status', label: 'Status', type: 'select', req: 1, options: ['Ativo', 'Inativo'] }],
+    defaults: () => ({ status: 'Ativo' }), log: (o, n) => `${n ? 'Terceiro cadastrado' : 'Terceiro atualizado'}: ${o.nome}`
   },
   usuarios: {
     col: 'usuarios', group: 'Cadastros', title: 'Usuários', newText: 'Novo usuário', editText: 'Editar usuário', searchPh: 'por nome ou e-mail', desc: 'O diretor (CEO) alimenta e controla todo o sistema e pode incluir outras pessoas para ajudar, acompanhando tudo.',
@@ -765,12 +870,13 @@ function metrics(p) {
   const custoTot = sumBy(P, custo);
   const pago = sumBy(P, x => Math.min(pagoProg(x.id), custo(x)));
   const comb = sumBy(A, a => a.valorTotal);
+  const serv = sumBy(S.pagTerceiros.filter(g => !s || g.data >= s), g => g.valor);
   const viagens = sumBy(P, x => x.qtdViagens);
-  const margem = produzido - custoTot - comb;
+  const margem = produzido - custoTot - comb - serv;
   const pend = pendencias(P);
   return {
     P, produzido, recebido, aReceber: Math.max(0, produzido - recebido), custoTot, pago, aPagar: Math.max(0, custoTot - pago),
-    comb, litros: sumBy(A, a => a.litros), viagens, margem, margemPct: pct(margem, produzido), ticket: viagens ? produzido / viagens : 0,
+    comb, serv, litros: sumBy(A, a => a.litros), viagens, margem, margemPct: pct(margem, produzido), ticket: viagens ? produzido / viagens : 0,
     ativas: S.progs.filter(x => x.status === 'Em andamento'), programadas: S.progs.filter(x => x.status === 'Programada'),
     pend, pendRec: pend.filter(x => x.tipo === 'Receber'), pendPag: pend.filter(x => x.tipo === 'Pagar')
   };
@@ -789,12 +895,12 @@ function kpiHtml(m) {
     ['Faturamento', brl(m.produzido), 'dollar', `${num(m.viagens)} viagens · ticket médio ${brl(m.ticket)}`, '', flash('produzido', m.produzido)],
     ['Recebido', brl(m.recebido), 'check', `${pr}% do faturamento`, meter(pr), flash('recebido', m.recebido)],
     ['A receber', brl(m.aReceber), 'clock', `${m.pendRec.length} lote(s) finalizado(s) em aberto`, '', flash('aReceber', m.aReceber)],
-    ['Margem operacional', `<span class="${m.margem < 0 ? 'neg' : ''}">${brl(m.margem)}</span>`, 'trend', `${m.margemPct}% · faturamento − motoristas − combustível`, meter(m.margemPct), flash('margem', m.margem)]
+    ['Margem operacional', `<span class="${m.margem < 0 ? 'neg' : ''}">${brl(m.margem)}</span>`, 'trend', `${m.margemPct}% · após motoristas, combustível e serviços`, meter(m.margemPct), flash('margem', m.margem)]
   ].map(statCard).join('');
 }
 function stripHtmlBlock(m) {
   const c = (icon, l, v, s) => `<div><span class="ti">${ic(icon, 17)}</span><div><span>${l}</span><b>${v}</b><em>${s}</em></div></div>`;
-  return `<div class="strip">${c('truck', 'Em andamento', num(m.ativas.length), 'operações agora')}${c('calendar', 'Programadas', num(m.programadas.length), 'aguardando início')}${c('wallet', 'A pagar a motoristas', brl(m.aPagar), 'inclui operações em andamento')}${c('fuel', 'Combustível', brl(m.comb), num(m.litros) + ' litros')}</div>`;
+  return `<div class="strip">${c('truck', 'Em andamento', num(m.ativas.length), 'operações agora')}${c('calendar', 'Programadas', num(m.programadas.length), 'aguardando início')}${c('wallet', 'A pagar a motoristas', brl(m.aPagar), 'inclui operações em andamento')}${c('fuel', 'Combustível e serviços', brl(m.comb + m.serv), `${brl(m.comb)} comb. · ${brl(m.serv)} serv.`)}</div>`;
 }
 function stackHtml(m) {
   const row = (t, a, la, b, lb) => {
@@ -803,7 +909,7 @@ function stackHtml(m) {
       <div class="stack">${pa > 0 ? `<i class="s-a" style="width:${pa}%"></i>` : ''}${pa < 100 ? `<i class="s-b" style="width:${100 - pa}%"></i>` : ''}</div>
       <div class="stack-l"><span><i class="s-a"></i>${la} <b>${brl(a)}</b></span><span><i class="s-b"></i>${lb} <b>${brl(b)}</b></span></div></div>`;
   };
-  return row('Clientes', m.recebido, 'Recebido', m.aReceber, 'A receber') + row('Motoristas e terceiros', m.pago, 'Pago', m.aPagar, 'A pagar');
+  return row('Clientes', m.recebido, 'Recebido', m.aReceber, 'A receber') + row('Motoristas', m.pago, 'Pago', m.aPagar, 'A pagar');
 }
 function pendHtml(list, n, only) {
   if (!list.length) return emptyState('Nenhuma pendência', '<div>Tudo em dia no período selecionado.</div>', 'check');
@@ -815,7 +921,7 @@ function opsHtml(n) {
   return a.map(p => {
     const v = pct(p.qtdViagens, p.qtdPrevista);
     return `<div class="op"><div class="op-h">${person(nome('motoristas', p.motoristaId))}${badge(p.status, stProg(p.status))}</div>
-      <div class="op-s">${esc(nome('empresas', p.clienteId))} · Lote ${esc(p.lote)} · ${esc(p.placa)}</div>
+      <div class="op-s">${p.vaga ? `<span class="vaga sm">${esc(p.vaga)}</span>` : ''}${esc(nome('empresas', p.clienteId))} · Lote ${esc(p.lote)} · ${esc(p.placa)}</div>
       ${meter(v, v >= 100)}<div class="op-f"><span>${p.qtdViagens} de ${p.qtdPrevista} viagens (${v}%)</span><span>${brl(total(p))}</span></div></div>`;
   }).join('');
 }
@@ -843,6 +949,7 @@ function dashboard() {
   $('#app').innerHTML = `
     ${pageHead('', 'Dashboard', `<span class="live-tag"><i></i>Tempo real</span><span>Período: ${perLabel(per)}</span><span class="dotsep">·</span><span>Atualizado às ${hora}</span>`,
       `<div class="seg" role="group" aria-label="Período">${PERIODS.map(([v, l]) => `<button data-p="${v}" class="${v === per ? 'on' : ''}">${l}</button>`).join('')}</div><button class="btn btn-pri" id="btnTv">${ic('tv', 15)}Modo TV</button>`)}
+    ${alertBar()}
     <div class="stats">${kpiHtml(m)}</div>
     ${stripHtmlBlock(m)}
     <div class="grid g-21">
@@ -948,18 +1055,74 @@ document.addEventListener('keydown', e => {
   if (e.key === 'ArrowLeft') tvGo(-1);
 });
 
+/* ---------------- Controle de vencimentos ---------------- */
+function alertBar() {
+  const al = alertas();
+  if (!al.length) return '';
+  const venc = al.filter(x => x.sit[2] === 2).length;
+  return `<a class="alert-bar ${venc ? 'bad' : ''}" href="#/controle"><span class="ab-ic">${ic('alert', 17)}</span><div class="ab-t"><b>${al.length} vencimento${al.length === 1 ? '' : 's'} precisa${al.length === 1 ? '' : 'm'} de atenção</b><span>${al.slice(0, 3).map(x => esc(alertTxt(x))).join(' · ')}${al.length > 3 ? ` · e mais ${al.length - 3}` : ''}</span></div><span class="ab-go">Ver controle${ic('chevR', 15)}</span></a>`;
+}
+let ctl = { q: '', t: '', s: '' };
+function controle() {
+  const all = vencs();
+  const nv = all.filter(x => x.sit[2] === 2), na = all.filter(x => x.sit[2] === 1), nk = all.filter(x => x.sit[2] === 0), ns = all.filter(x => x.sit[2] < 0);
+  const sum = [
+    ['Vencidos', num(nv.length), 'alert', 'Precisam ser regularizados', '', nv.length ? 'is-bad' : ''],
+    ['Vencem em até 1 mês', num(na.length), 'clock', 'Programe a renovação', '', na.length ? 'is-warn' : ''],
+    ['Em dia', num(nk.length), 'check', `${pct(nk.length, all.length)}% dos documentos`],
+    ['Acompanhados', num(all.length), 'shield', `${num(S.veiculos.length)} veículo(s) · ${num(S.motoristas.length)} motorista(s)${ns.length ? ` · ${ns.length} sem data` : ''}`]
+  ];
+  const sitOpts = [['2', 'Vencido'], ['1', 'Vence em até 1 mês'], ['0', 'Em dia'], ['-1', 'Sem data informada']];
+  $('#app').innerHTML = `
+    ${pageHead('', 'Controle de vencimentos', 'IPVA dos veículos e CNH dos motoristas. O sistema avisa quando faltar 1 mês para o vencimento.')}
+    ${sumBlock(sum)}
+    <div class="panel">
+      <div class="toolbar">
+        <div class="tb-l"><div class="search">${ic('search')}<input id="q" placeholder="Buscar por placa ou nome..." value="${esc(ctl.q)}" aria-label="Buscar"></div>
+          <select id="fT" class="sel-sm" aria-label="Filtrar por tipo"><option value="">Tipo: todos</option>${['Veículo', 'Motorista'].map(o => `<option ${o === ctl.t ? 'selected' : ''}>${o}</option>`).join('')}</select>
+          <select id="fS" class="sel-sm" aria-label="Filtrar por situação"><option value="">Situação: todas</option>${sitOpts.map(([v, l]) => `<option value="${v}" ${v === ctl.s ? 'selected' : ''}>${l}</option>`).join('')}</select></div>
+        <div class="tb-r"><span class="count" id="cnt"></span></div>
+      </div>
+      <div class="tscroll"><table class="tbl"><thead><tr><th>Tipo</th><th>Identificação</th><th>Documento</th><th>Vencimento</th><th>Situação</th><th class="act" aria-label="Ações"></th></tr></thead><tbody id="tb"></tbody></table></div>
+      <div class="tbl-foot"><span id="cnt2"></span><span>IPVA pelo mês/ano · CNH pela data de validade · clique na linha para atualizar</span></div>
+    </div>`;
+  const view = () => {
+    const q = ctl.q.toLowerCase();
+    const rows = all.filter(x => (!ctl.t || x.tipo === ctl.t) && (ctl.s === '' || String(x.sit[2]) === ctl.s) && (!q || `${x.ident} ${x.sub}`.toLowerCase().includes(q)));
+    $('#tb').innerHTML = rows.length ? rows.map(x => `<tr class="click" data-k="${x.key}">
+        <td>${badge(x.tipo, x.tipo === 'Veículo' ? 'run' : 'no')}</td>
+        <td>${x.tipo === 'Veículo' ? `<span class="mono"><b>${esc(x.ident)}</b></span> <span style="color:var(--mut)">· ${esc(x.sub)}</span>` : person(x.ident)}</td>
+        <td><b>${x.doc}</b> <span style="color:var(--mut)">${x.doc === 'IPVA' ? 'mês/ano' : esc(x.sub)}</span></td>
+        <td class="mono">${x.sit[2] < 0 ? '<span style="color:var(--sub)">Não informado</span>' : esc(x.venc)}</td>
+        <td>${badge(x.sit[0], x.sit[1])}</td>
+        <td class="act"><div><button class="ib" data-e="${x.key}" title="Atualizar vencimento" aria-label="Atualizar vencimento">${ic('pencil', 15)}</button></div></td></tr>`).join('')
+      : `<tr><td colspan="6">${emptyState('Nenhum resultado encontrado', '<div>Ajuste a busca ou os filtros.</div>', 'search')}</td></tr>`;
+    $('#cnt').textContent = `${rows.length} de ${all.length}`;
+    $('#cnt2').textContent = `Mostrando ${rows.length} de ${all.length} documento${all.length === 1 ? '' : 's'}`;
+    const open = k => { const x = all.find(y => y.key === k); if (x) form(cadastros[x.col], x.ref); };
+    $$('#tb tr[data-k]').forEach(tr => tr.onclick = () => open(tr.dataset.k));
+    $$('#tb [data-e]').forEach(b => b.onclick = e => { e.stopPropagation(); open(b.dataset.e); });
+  };
+  view();
+  bindSum();
+  $('#q').oninput = e => { ctl.q = e.target.value; view(); };
+  $('#fT').onchange = e => { ctl.t = e.target.value; view(); };
+  $('#fS').onchange = e => { ctl.s = e.target.value; view(); };
+}
+
 /* ---------------- Rotas ---------------- */
 const routes = {
-  dashboard, tv,
-  escala: () => crud(progCfg('escala')), servico: () => crud(progCfg('servico')),
-  'pag-motorista': () => crud(pagCfg('Próprio')), 'pag-terceiros': () => crud(pagCfg('Terceiro')),
+  dashboard, tv, controle,
+  escala: () => crud(progCfg()),
+  'pag-motorista': () => crud(pagCfg), 'pag-terceiros': () => crud(pagTercCfg),
   abastecimentos: () => crud(abastCfg), rpas: () => crud(recCfg),
-  motoristas: () => crud(cadastros.motoristas), veiculos: () => crud(cadastros.veiculos), empresas: () => crud(cadastros.empresas), usuarios: () => crud(cadastros.usuarios)
+  motoristas: () => crud(cadastros.motoristas), veiculos: () => crud(cadastros.veiculos), empresas: () => crud(cadastros.empresas), terceiros: () => crud(cadastros.terceiros), usuarios: () => crud(cadastros.usuarios)
 };
 function render(fromChange) {
   if (!me()) return renderLogin();
   if (modalOpen) { pendingRender = true; return; }
-  const r = location.hash.replace('#/', '') || 'dashboard';
+  let r = location.hash.replace('#/', '') || 'dashboard';
+  if (r === 'servico') { history.replaceState(null, '', '#/escala'); r = 'escala'; }
   const route = routes[r] ? r : 'dashboard';
   if (route !== 'tv' && document.body.classList.contains('tv')) tvStop();
   if (!fromChange) ls.key = null;
@@ -1005,7 +1168,7 @@ function tick() {
     return save(`Abastecimento registrado: ${v.placa} — ${l} L`, '⛽');
   }
   const m = pick(S.motoristas), c = pick(S.empresas), v = pick(S.veiculos), vv = pick([150, 180, 210, 240]);
-  S.progs.push({ id: uid(), tipo: pick(['escala', 'servico']), data: ymd(new Date()), clienteId: c.id, lote: `25GX${rnd(1000, 9999)}HR`, vaga: rnd(10, 99), motoristaId: m.id, placa: v.placa, valorViagem: vv, valorMotorista: Math.round(vv * .39), qtdPrevista: rnd(8, 24), qtdViagens: 0, inicio: '06:00', fim: '', status: 'Programada', ocorrencia: false, valorOcorrencia: 0 });
+  S.progs.push({ id: uid(), tipo: 'escala', data: ymd(new Date()), clienteId: c.id, lote: `25GX${rnd(1000, 9999)}HR`, vaga: rnd(10, 99), motoristaId: m.id, placa: v.placa, valorViagem: vv, valorMotorista: Math.round(vv * .39), qtdPrevista: rnd(8, 24), qtdViagens: 0, inicio: '06:00', fim: '', status: 'Programada', ocorrencia: false, valorOcorrencia: 0 });
   save(`Nova programação: ${m.nome} → ${c.nome}`, '🗓️');
 }
 function toggleLive() {
@@ -1016,9 +1179,7 @@ function toggleLive() {
 }
 
 /* ---------------- Início ---------------- */
-S = load() || seed();
-S.usuarios.forEach(u => { if (u.perfil === 'Supervisor') u.perfil = 'Diretor / CEO'; });
-S.motoristas.forEach(m => { const c = cnhSeed()[m.id]; if (!m.cnhNum && c) Object.assign(m, c); });
+S = migrate(load() || seed());
 store.set(KEY, JSON.stringify(S));
 if (new URLSearchParams(location.search).has('demo') && !me()) store.set(SKEY, 'u1');
 setInterval(clock, 15000);
