@@ -377,11 +377,20 @@ document.addEventListener('click', e => {
 const NKEY = 'serafini_notif_lidas';
 let lidas = (() => { try { return new Set(JSON.parse(store.get(NKEY) || '[]')); } catch (e) { return new Set(); } })();
 const ago = t => { const m = Math.round((Date.now() - t) / 6e4); return m < 1 ? 'agora' : m < 60 ? `há ${m} min` : m < 1440 ? `há ${Math.round(m / 60)} h` : new Date(t).toLocaleDateString('pt-BR'); };
+/* Grupos do painel de notificações (na ordem em que aparecem) */
+const NGRP = [['venc', 'Vencimentos', 'alert'], ['fin', 'Pendências financeiras', 'dollar'], ['prog', 'Programação', 'calendar'], ['pag', 'Pagamentos', 'wallet'], ['rec', 'Recebimentos', 'receipt'], ['abast', 'Abastecimentos', 'fuel'], ['cad', 'Cadastros e alterações', 'pencil']];
+const LOG_GRP = { '🚛': 'prog', '📦': 'prog', '🏁': 'prog', '🗓️': 'prog', '💸': 'pag', '🔧': 'pag', '💰': 'rec', '🧾': 'rec', '⛽': 'abast' };
+const LOG_GO = { prog: '#/escala', rec: '#/rpas', abast: '#/abastecimentos' };
+const ntFechados = new Set();
 function notifs() {
   const out = [];
-  alertas().forEach(x => out.push({ id: `v:${x.key}:${x.sit[2]}`, icon: 'alert', tone: x.sit[2] === 2 ? 'red' : 'warn', title: `${x.doc} ${x.tipo === 'Veículo' ? 'do veículo' : 'de'} ${x.ident}`, msg: `${x.sit[0]} · ${x.venc}`, tag: 'Vencimento', go: () => { location.hash = '#/controle'; } }));
-  pendencias(S.progs).slice(0, 4).forEach(x => out.push({ id: `p:${x.p.id}:${x.tipo}`, icon: x.tipo === 'Receber' ? 'receipt' : 'wallet', tone: 'info', title: x.tipo === 'Receber' ? `A receber de ${x.quem}` : `A pagar para ${x.quem}`, msg: `${brl(x.valor)} · lote ${x.p.lote} · ${x.dias} dia${x.dias === 1 ? '' : 's'} em aberto`, tag: 'Financeiro', go: () => progDetail(x.p) }));
-  S.log.filter(l => Date.now() - l.t < 2 * 864e5).slice(0, 8).forEach(l => { const [i, t] = feedIc(l.icon); out.push({ id: `l:${l.t}`, icon: i, tone: t, title: l.msg, msg: '', tag: ago(l.t) }); });
+  alertas().forEach(x => out.push({ g: 'venc', id: `v:${x.key}:${x.sit[2]}`, icon: 'alert', tone: x.sit[2] === 2 ? 'red' : 'warn', title: `${x.doc} ${x.tipo === 'Veículo' ? 'do veículo' : 'de'} ${x.ident}`, msg: `${x.sit[0]} · ${x.venc}`, tag: 'Ver no Controle', go: () => { location.hash = '#/controle'; } }));
+  pendencias(S.progs).slice(0, 5).forEach(x => out.push({ g: 'fin', id: `p:${x.p.id}:${x.tipo}`, icon: x.tipo === 'Receber' ? 'receipt' : 'wallet', tone: 'info', title: x.tipo === 'Receber' ? `A receber de ${x.quem}` : `A pagar para ${x.quem}`, msg: `${brl(x.valor)} · lote ${x.p.lote} · ${x.dias} dia${x.dias === 1 ? '' : 's'} em aberto`, tag: 'Abrir ficha do lote', go: () => progDetail(x.p) }));
+  S.log.filter(l => Date.now() - l.t < 2 * 864e5).slice(0, 14).forEach(l => {
+    const [i, t] = feedIc(l.icon), g = LOG_GRP[l.icon] || 'cad';
+    const href = g === 'pag' ? (l.icon === '🔧' ? '#/pag-terceiros' : '#/pag-motorista') : LOG_GO[g];
+    out.push({ g, id: `l:${l.t}`, icon: i, tone: t, title: l.msg, msg: '', tag: ago(l.t), go: href ? () => { location.hash = href; } : null });
+  });
   return out;
 }
 let notifCache = [], notifNovas = new Set();
@@ -394,11 +403,23 @@ function renderNotif() {
   $('#ntBtn').title = n ? `${n} notificação(ões) nova(s)` : 'Notificações';
   if (!open) return;
   dd.innerHTML = `<div class="nt-h"><b>Notificações</b><span>${notifNovas.size ? `${notifNovas.size} nova${notifNovas.size === 1 ? '' : 's'}` : 'Tudo em dia'}</span></div>
-    <div class="nt-l">${notifCache.length ? notifCache.map((x, i) => `<button class="nt-i ${notifNovas.has(x.id) ? 'new' : ''} ${x.go ? '' : 'ro'}" data-n="${i}" type="button"><span class="f-ic t-${x.tone}">${ic(x.icon, 15)}</span><span class="nt-x"><b>${esc(x.title)}</b>${x.msg ? `<small>${esc(x.msg)}</small>` : ''}<em>${esc(x.tag)}</em></span></button>`).join('')
+    <div class="nt-l">${notifCache.length ? NGRP.map(([g, label, gic]) => {
+        const its = notifCache.map((x, i) => [x, i]).filter(([x]) => x.g === g);
+        if (!its.length) return '';
+        const nv = its.filter(([x]) => notifNovas.has(x.id)).length;
+        return `<div class="nt-grp ${ntFechados.has(g) ? 'off' : ''}"><button class="nt-gh" type="button" data-g="${g}" aria-expanded="${!ntFechados.has(g)}">${ic(gic, 14)}<span>${label}</span><em>${its.length}</em>${nv ? `<i>${nv} nova${nv === 1 ? '' : 's'}</i>` : ''}${ic('chev', 15, 'nt-cv')}</button>
+          <div class="nt-gb">${its.map(([x, i]) => `<button class="nt-i ${notifNovas.has(x.id) ? 'new' : ''} ${x.go ? '' : 'ro'}" data-n="${i}" type="button"><span class="f-ic t-${x.tone}">${ic(x.icon, 15)}</span><span class="nt-x"><b>${esc(x.title)}</b>${x.msg ? `<small>${esc(x.msg)}</small>` : ''}<em>${esc(x.tag)}</em></span></button>`).join('')}</div></div>`;
+      }).join('')
       : `<div class="nt-e">${ic('check', 18)}<span>Nenhuma notificação no momento.</span></div>`}</div>
     <a class="nt-f" href="#/dashboard">Ver painel completo</a>`;
   $$('#ntDd [data-n]').forEach(b => b.onclick = e => { e.stopPropagation(); const x = notifCache[+b.dataset.n]; if (!x.go) return; $('#nt').classList.remove('open'); x.go(); });
   $('#ntDd .nt-f').onclick = () => $('#nt').classList.remove('open');
+  $$('#ntDd [data-g]').forEach(b => b.onclick = e => {
+    e.stopPropagation();
+    const g = b.dataset.g, off = b.parentElement.classList.toggle('off');
+    off ? ntFechados.add(g) : ntFechados.delete(g);
+    b.setAttribute('aria-expanded', !off);
+  });
 }
 function marcarLidas() {
   notifCache.forEach(x => lidas.add(x.id));

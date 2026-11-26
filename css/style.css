@@ -843,3 +843,16 @@ main.has-hero{padding-top:0}
 .hero-dots button:hover{background:rgba(255,255,255,.7)}
 .hero-dots button.on{width:40px;background:#fff}
 @media (max-width:700px){.hero::before{background:linear-gradient(0deg,rgba(0,0,0,.78) 0%,rgba(0,0,0,.4) 60%,rgba(0,0,0,.2) 100%)}.hero-dots{left:auto;right:16px;transform:none;bottom:10px}}
+/* notificações agrupadas */
+.nt-l{padding:4px 6px 6px}
+.nt-grp+.nt-grp{border-top:1px solid var(--line-2);margin-top:4px;padding-top:4px}
+.nt-gh{position:sticky;top:-4px;z-index:1;display:flex;align-items:center;gap:8px;width:100%;padding:9px 10px;border:0;background:#fff;font:600 12px var(--font);letter-spacing:.04em;text-transform:uppercase;color:var(--mut);cursor:pointer;border-radius:var(--r-sm)}
+.nt-gh:hover{color:var(--ink);background:var(--bg)}
+.nt-gh>.ic:first-child{color:var(--sub)}
+.nt-gh span{flex:none}
+.nt-gh em{font-style:normal;min-width:20px;height:18px;padding:0 6px;border-radius:999px;background:var(--neu-bg);color:var(--ink-2);font-size:11px;display:inline-grid;place-items:center;letter-spacing:0}
+.nt-gh i{font-style:normal;font-size:11px;font-weight:600;color:var(--acc);text-transform:none;letter-spacing:0}
+.nt-gh .nt-cv{margin-left:auto;transition:transform .2s;transform:rotate(180deg)}
+.nt-grp.off .nt-cv{transform:none}
+.nt-grp.off .nt-gb{display:none}
+.nt-gb .nt-i{padding:9px 10px}
