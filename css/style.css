@@ -531,3 +531,45 @@ body.tv main{padding:0;min-height:0}
 .person{display:inline-flex;vertical-align:middle}
 .um-head>div{min-width:0}
 .um-head small{display:block;word-break:normal;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+/* =========================================================
+   Barra superior única (logo + menu + status + perfil)
+   ========================================================= */
+.top{position:sticky;top:0;z-index:30;height:60px;padding:0 24px;gap:6px;justify-content:flex-start;background:#071c40;box-shadow:0 1px 0 rgba(255,255,255,.05),0 2px 10px rgba(0,0,0,.12)}
+.top .brand{margin-right:26px;gap:10px;flex:none}
+.top .brand img{width:36px;height:36px}
+.top .wm b{font-size:15.5px;letter-spacing:2.8px}
+.top .wm span{font-size:8.5px;letter-spacing:4.6px;margin-top:3px}
+.nav-l{display:flex;align-self:stretch;flex:1;min-width:0}
+.top .nav-link{height:60px;padding:0 14px;font-size:14.5px;font-weight:500;color:rgba(255,255,255,.68);border-bottom:2px solid transparent;gap:6px;background:none}
+.top .nav-link:hover,.top .nav-item:hover>.nav-link{color:#fff;background:transparent}
+.top .nav-item.active>.nav-link{color:#fff;font-weight:600;border-bottom-color:var(--green)}
+.top .nav-link .chev{opacity:.5;margin:1px 0 0}
+.top .dd{padding-top:4px}
+.top-r{margin-left:auto;gap:10px;flex:none}
+.live{display:inline-flex;align-items:center;gap:8px;height:34px;padding:0 10px;border:0;border-radius:var(--r);background:none;color:rgba(255,255,255,.62);font:600 13.5px var(--font);cursor:pointer;transition:.15s;white-space:nowrap}
+.live:hover{background:rgba(255,255,255,.06);color:#fff}
+.live i{width:8px;height:8px;border-radius:50%;background:#7d8aa3;flex:none}
+.live.on{color:#fff}
+.live.on i{background:var(--green);animation:pulse 1.6s infinite}
+.top .vsep{height:26px;background:rgba(255,255,255,.12)}
+.top .clock{display:block;text-align:right;padding:0 2px}
+.top .clock b{font-size:14.5px;font-weight:700;letter-spacing:.2px}
+.top .clock span{font-size:12px;color:rgba(255,255,255,.55)}
+.ib-top{width:36px;height:36px;display:inline-grid;place-items:center;border-radius:var(--r);border:0;background:none;color:rgba(255,255,255,.72);cursor:pointer;transition:.15s}
+.ib-top:hover{background:rgba(255,255,255,.08);color:#fff}
+.top .um-btn{padding:2px;border-radius:50%}
+.top .av-top{width:34px;height:34px;background:#2c6bb5;font-size:12.5px}
+.um-head .badge{height:20px;font-size:11px;padding:0 8px}
+main{min-height:calc(100vh - 60px - 58px)}
+@media (max-width:1280px){.top .clock{display:block}}
+@media (max-width:1180px){.top .wm{display:none}.top .brand{margin-right:14px}.top .nav-link{padding:0 11px;font-size:14px}}
+@media (max-width:1060px){.top .clock,.top .vs-clock{display:none}}
+@media (max-width:960px){
+  .top{padding:0 12px}
+  .nav-l{display:none}
+  .burger{display:inline-grid}
+  .top .wm{display:block}
+  .top .vsep{display:none}
+}
+@media (max-width:420px){.top .wm span{display:none}.live span{display:none}}

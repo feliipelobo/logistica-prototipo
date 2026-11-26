@@ -1,13 +1,10 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" role="img" aria-label="Serafini Transportes">
-  <rect width="120" height="120" fill="#0a2463"/>
-  <circle cx="60" cy="60" r="48" fill="none" stroke="#3dbb55" stroke-width="5"/>
-  <g fill="#3dbb55">
-    <!-- árvore esquerda -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="8 8 104 104" role="img" aria-label="Serafini Transportes">
+  <circle cx="60" cy="60" r="48" fill="none" stroke="#2fae4e" stroke-width="5"/>
+  <g fill="#2fae4e">
     <path d="M40 27 L53 50 H46 L57 68 H23 L34 50 H27 Z"/>
     <rect x="37" y="68" width="6" height="10"/>
-    <!-- árvore direita -->
     <path d="M80 27 L93 50 H86 L97 68 H63 L74 50 H67 Z"/>
     <rect x="77" y="68" width="6" height="10"/>
   </g>
-  <rect x="31" y="78" width="58" height="4" fill="#3dbb55"/>
+  <rect x="31" y="78" width="58" height="4" fill="#2fae4e"/>
 </svg>

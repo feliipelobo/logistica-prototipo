@@ -246,7 +246,7 @@ function renderLogin(err, email) {
   document.body.classList.remove('tv');
   $('#shell').hidden = true; $('#login').hidden = false;
   const def = email ?? (S.usuarios[0] ? S.usuarios[0].email : '');
-  const brandHtml = `<div class="brand"><img src="logo.svg" alt=""><div class="wm"><b>SERAFINI</b><span>TRANSPORTES</span></div></div>`;
+  const brandHtml = `<div class="brand"><img src="img/logo-simbolo.png" alt=""><div class="wm"><b>SERAFINI</b><span>TRANSPORTES</span></div></div>`;
   $('#login').innerHTML = `<div class="login">
     <aside class="lg-side">${brandHtml}
       <div class="lg-copy"><h2>Gestão operacional e financeira da sua transportadora.</h2>
@@ -301,15 +301,19 @@ const NAV = [
 function renderShell() {
   const u = me();
   $('#top').innerHTML = `
-    <div class="top-l"><button class="burger" id="burger" aria-label="Abrir menu">${ic('menu', 20)}</button>
-      <a class="brand" href="#/dashboard"><img src="logo.svg" alt="Serafini Transportes"><div class="wm"><b>SERAFINI</b><span>TRANSPORTES</span></div></a></div>
+    <button class="burger" id="burger" aria-label="Abrir menu">${ic('menu', 20)}</button>
+    <a class="brand" href="#/dashboard" aria-label="Serafini Transportes, ir para o início"><img src="img/logo-simbolo.png" alt=""><div class="wm"><b>SERAFINI</b><span>TRANSPORTES</span></div></a>
+    <nav class="nav-l" id="navLinks" aria-label="Menu principal"></nav>
     <div class="top-r">
-      <button class="live-btn ${timer ? 'on' : ''}" id="btnLive" title="Simula movimentações em tempo real para demonstração"><span class="ld"></span><span class="lt">${timer ? 'Simulação ativa' : 'Simulação ao vivo'}</span></button>
-      <div class="clock"><b id="clkTime"></b><span id="clkDate"></span></div><span class="vsep"></span>
+      <button class="live ${timer ? 'on' : ''}" id="btnLive" title="Liga ou desliga a simulação de movimentações em tempo real"><i></i><span>Ao vivo</span></button>
+      <span class="vsep vs-clock"></span>
+      <div class="clock"><b id="clkTime"></b><span id="clkDate"></span></div>
+      <span class="vsep"></span>
+      <button class="ib-top" id="btnTvTop" title="Modo TV" aria-label="Abrir modo TV">${ic('tv', 18)}</button>
       <div class="um" id="um">
-        <button class="um-btn" id="umBtn" aria-haspopup="menu" aria-expanded="false">${avatar(u.nome, 'av-top')}<span class="who"><b>${esc(u.nome)}</b><small>${esc(u.perfil)}</small></span>${ic('chev', 16, 'chev')}</button>
+        <button class="um-btn" id="umBtn" aria-haspopup="menu" aria-expanded="false" title="${esc(u.nome)} · ${esc(u.perfil)}">${avatar(u.nome, 'av-top')}</button>
         <div class="um-dd" role="menu">
-          <div class="um-head">${avatar(u.nome, 'av-lg')}<div><b>${esc(u.nome)}</b><small>${esc(u.email)}</small></div></div>
+          <div class="um-head">${avatar(u.nome, 'av-lg av-top')}<div><b>${esc(u.nome)}</b><small>${esc(u.email)}</small><span class="badge b-run" style="margin-top:6px">${esc(u.perfil)}</span></div></div>
           <button class="mi-btn" data-um="perfil">${ic('user')}Meu perfil</button>
           <a class="mi-btn" href="#/usuarios">${ic('users')}Usuários e acessos</a>
           <button class="mi-btn" data-um="reset">${ic('refresh')}Restaurar dados de demonstração</button>
@@ -317,6 +321,7 @@ function renderShell() {
           <button class="mi-btn danger" data-um="sair">${ic('logout')}Sair</button>
         </div></div></div>`;
   $('#btnLive').onclick = toggleLive;
+  $('#btnTvTop').onclick = tvEnter;
   $('#burger').onclick = () => $('#mnav').classList.add('open');
   $('#umBtn').onclick = e => { e.stopPropagation(); const o = $('#um').classList.toggle('open'); $('#umBtn').setAttribute('aria-expanded', o); };
   $$('#um .um-dd a, #um .um-dd button').forEach(b => b.addEventListener('click', () => $('#um').classList.remove('open')));
@@ -327,29 +332,29 @@ function renderShell() {
 }
 function renderNav(route) {
   const on = it => it.r === route || (it.items || []).some(i => i[0] === route);
-  const link = (i) => `<a class="dd-a ${i[0] === route ? 'on' : ''}" href="#/${i[0]}"><span class="ti">${ic(i[3], 16)}</span><span><b>${i[1]}</b><small>${i[2]}</small></span></a>`;
-  $('#nav').innerHTML = `<div class="nav-l">${NAV.map(it => it.r
-    ? `<div class="nav-item ${on(it) ? 'active' : ''}"><a class="nav-link" href="#/${it.r}">${ic(it.icon)}${it.label}</a></div>`
-    : `<div class="nav-item ${on(it) ? 'active' : ''}"><button class="nav-link" type="button">${ic(it.icon)}${it.label}${ic('chev', 14, 'chev')}</button><div class="dd"><div class="dd-in">${it.items.map(link).join('')}</div></div></div>`).join('')}</div>
-    <a class="nav-tv" href="#/tv" id="navTv">${ic('tv', 15)}Modo TV</a>`;
-  $('#navTv').onclick = e => { e.preventDefault(); tvEnter(); };
-  $$('#nav .dd-a').forEach(a => a.addEventListener('click', () => a.blur()));
-  $('#mnav').innerHTML = `<div class="mnav-bg" data-close></div><div class="mnav-p"><div class="mnav-h"><div class="brand"><img src="logo.svg" alt="" style="width:34px;height:34px"><div class="wm"><b>SERAFINI</b><span>TRANSPORTES</span></div></div><button data-close aria-label="Fechar menu">${ic('x', 20)}</button></div>
+  const link = i => `<a class="dd-a ${i[0] === route ? 'on' : ''}" href="#/${i[0]}"><span class="ti">${ic(i[3], 16)}</span><span><b>${i[1]}</b><small>${i[2]}</small></span></a>`;
+  $('#navLinks').innerHTML = NAV.map(it => it.r
+    ? `<div class="nav-item ${on(it) ? 'active' : ''}"><a class="nav-link" href="#/${it.r}">${it.label}</a></div>`
+    : `<div class="nav-item ${on(it) ? 'active' : ''}"><button class="nav-link" type="button" aria-haspopup="true">${it.label}${ic('chev', 13, 'chev')}</button><div class="dd"><div class="dd-in">${it.items.map(link).join('')}</div></div></div>`).join('');
+  $$('#navLinks .dd-a').forEach(a => a.addEventListener('click', () => a.blur()));
+  $('#mnav').innerHTML = `<div class="mnav-bg" data-close></div><div class="mnav-p"><div class="mnav-h"><div class="brand"><img src="img/logo-simbolo.png" alt="" style="width:32px;height:32px"><div class="wm"><b>SERAFINI</b><span>TRANSPORTES</span></div></div><button data-close aria-label="Fechar menu">${ic('x', 20)}</button></div>
     <div class="mnav-b">${NAV.map(it => it.r ? link([it.r, it.label, 'Visão geral e indicadores', it.icon]) : `<div class="mnav-g">${it.label}</div>${it.items.map(link).join('')}`).join('')}
     <div class="mnav-g">Apresentação</div>${link(['tv', 'Modo TV', 'Painel em tela cheia', 'tv'])}</div></div>`;
   $$('#mnav [data-close], #mnav a').forEach(el => el.addEventListener('click', () => $('#mnav').classList.remove('open')));
 }
 document.addEventListener('click', e => { const um = $('#um'); if (um && !um.contains(e.target)) um.classList.remove('open'); });
+const DIAS = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'], MESES = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez'];
 function clock() {
   const d = new Date();
   const t = d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
-  const dt = d.toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: 'long', year: 'numeric' });
-  [['#clkTime', t], ['#clkDate', dt], ['#tvClock', t], ['#tvDate', dt]].forEach(([s, v]) => { const el = $(s); if (el) el.textContent = v; });
+  const curta = `${DIAS[d.getDay()]}, ${d.getDate()} de ${MESES[d.getMonth()]}`;
+  const longa = d.toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: 'long', year: 'numeric' });
+  [['#clkTime', t], ['#clkDate', curta], ['#tvClock', t], ['#tvDate', longa]].forEach(([s, v]) => { const el = $(s); if (el) el.textContent = v; });
 }
 function profile() {
   const u = me();
   openModal({ title: 'Meu perfil', sub: 'Dados da sua conta de acesso', body: `
-    <div class="person" style="gap:14px;margin-bottom:18px">${avatar(u.nome, 'av-lg')}<div><b style="font-size:16px;font-weight:600">${esc(u.nome)}</b><div style="color:var(--mut);font-size:13.5px">${esc(u.email)}</div></div></div>
+    <div class="person" style="gap:14px;margin-bottom:18px">${avatar(u.nome, 'av-lg av-top')}<div><b style="font-size:16px;font-weight:600">${esc(u.nome)}</b><div style="color:var(--mut);font-size:13.5px">${esc(u.email)}</div></div></div>
     <div class="dl" style="grid-template-columns:repeat(2,minmax(0,1fr))"><div><span>Perfil</span><b>${esc(u.perfil)}</b></div><div><span>Status</span><b>${esc(u.status || 'Ativo')}</b></div><div><span>Empresa</span><b>Serafini Transportes</b></div><div><span>Sessão iniciada</span><b>${new Date().toLocaleDateString('pt-BR')}</b></div></div>
     <p style="color:var(--mut);font-size:13px;margin:0">Alteração de senha e autenticação em dois fatores estarão disponíveis na versão final.</p>`,
     footer: `<button class="btn btn-sec" data-x>Fechar</button>` });
@@ -786,7 +791,7 @@ function tv() {
   document.body.classList.add('tv');
   if (!$('#tvBody')) {
     $('#app').innerHTML = `<div class="tv-wrap">
-      <div class="tv-top"><div class="brand"><img src="logo.svg" alt=""><div class="wm"><b>SERAFINI</b><span>TRANSPORTES</span></div></div>
+      <div class="tv-top"><div class="brand"><img src="img/logo-simbolo.png" alt=""><div class="wm"><b>SERAFINI</b><span>TRANSPORTES</span></div></div>
         <div class="tv-title"><small>Painel operacional · ${perLabel(per)}</small><b id="tvTitle"></b></div>
         <div class="tv-clock"><b id="tvClock"></b><span id="tvDate"></span></div></div>
       <div class="tv-body" id="tvBody"></div>
@@ -894,7 +899,7 @@ function toggleLive() {
   const b = $('#btnLive');
   if (timer) { clearInterval(timer); timer = null; }
   else { tick(); timer = setInterval(tick, 3500); }
-  if (b) { b.classList.toggle('on', !!timer); $('.lt', b).textContent = timer ? 'Simulação ativa' : 'Simulação ao vivo'; }
+  if (b) b.classList.toggle('on', !!timer);
 }
 
 /* ---------------- Início ---------------- */
