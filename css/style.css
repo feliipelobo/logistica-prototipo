@@ -826,3 +826,9 @@ main.has-hero{padding-top:0}
 .ph{margin-bottom:32px}
 @media (max-width:960px){main{padding-top:56px}main.has-hero{padding-top:0}.hero{margin-bottom:36px;height:280px}.hero-cr{right:16px}}
 @media (max-width:700px){.hero{height:auto}.hero-cr{right:auto;left:16px;bottom:6px}}
+/* banner: escurecido neutro (sem tom azulado) */
+.hero{background:#0c0d0f}
+.hero-img{filter:brightness(.82) saturate(1.05) contrast(1.06)}
+.hero::before{background:linear-gradient(90deg,rgba(0,0,0,.72) 0%,rgba(0,0,0,.5) 32%,rgba(0,0,0,.26) 65%,rgba(0,0,0,.2) 100%),linear-gradient(0deg,rgba(0,0,0,.55) 0%,rgba(0,0,0,0) 50%),linear-gradient(180deg,rgba(0,0,0,.3) 0%,rgba(0,0,0,0) 22%)}
+.hero-k span{background:rgba(0,0,0,.45);border-color:rgba(255,255,255,.2)}
+@media (max-width:700px){.hero::before{background:linear-gradient(0deg,rgba(0,0,0,.85) 0%,rgba(0,0,0,.5) 60%,rgba(0,0,0,.3) 100%)}}
