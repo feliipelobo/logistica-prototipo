@@ -365,12 +365,12 @@ function profile() {
 let ls = { key: null, q: '', f: '', day: '', s: -1, d: 1, sel: new Set() };
 const cellTxt = (c, r) => c.render ? stripHtml(String(c.render(r))) : String(r[c.k] ?? '');
 function crud(cfg) {
-  if (ls.key !== cfg.title) ls = { key: cfg.title, q: '', f: '', day: '', s: -1, d: 1, sel: new Set() };
+  if (ls.key !== cfg.title) ls = { key: cfg.title, q: '', f: '', day: '', s: -1, d: 1, sel: new Set(), selMode: false };
   const all = cfg.rows ? cfg.rows() : S[cfg.col];
   ls.sel.forEach(id => { if (!all.some(r => r.id === id)) ls.sel.delete(id); });
   const sum = cfg.summary ? cfg.summary(all) : [];
   const fopts = cfg.filter ? (typeof cfg.filter.options === 'function' ? cfg.filter.options() : cfg.filter.options) : [];
-  const selOn = !!cfg.select;
+  const selOn = !!cfg.select && ls.selMode;
   $('#app').innerHTML = `
     ${pageHead(cfg.group, cfg.title, cfg.desc, `<button class="btn btn-pri" id="novo">${ic('plus')}${cfg.newText}</button>`)}
     ${sum.length ? `<div class="stats">${sum.map(statCard).join('')}</div>` : ''}
@@ -380,6 +380,7 @@ function crud(cfg) {
           ${cfg.dayFilter ? `<div class="day-f"><label for="day">Dia</label><input type="date" id="day" value="${esc(ls.day)}"><button class="btn btn-sec btn-sm" id="dayHoje" type="button">Hoje</button>${ls.day ? `<button class="ib" id="dayClr" type="button" title="Mostrar todos os dias" aria-label="Limpar dia">${ic('x', 15)}</button>` : ''}</div>` : ''}
           ${cfg.filter ? `<select id="flt" class="sel-sm" aria-label="Filtrar por ${cfg.filter.label}"><option value="">${cfg.filter.label}: todos</option>${fopts.map(o => `<option ${o === ls.f ? 'selected' : ''}>${esc(o)}</option>`).join('')}</select>` : ''}</div>
         <div class="tb-r"><span class="count" id="cnt"></span><button class="btn btn-sec btn-sm" id="csv">${ic('download', 15)}Exportar CSV</button>
+          ${cfg.select ? `<button class="btn btn-sec btn-sm ${selOn ? 'is-on' : ''}" id="selMode" type="button" aria-pressed="${selOn}">${ic(selOn ? 'x' : 'pencil', 15)}${selOn ? 'Cancelar' : 'Selecionar'}</button>` : ''}
           ${selOn ? `<button class="btn btn-pri btn-sm" id="selRun" disabled>${ic('image', 15)}<span id="selLbl">${cfg.select.label}</span></button>` : ''}</div>
       </div>
       ${selOn ? `<div class="selbar" id="selbar" hidden><span id="selTxt"></span><button class="lnk" id="selClr" type="button">Limpar seleção</button></div>` : ''}
@@ -430,6 +431,7 @@ function crud(cfg) {
     $('#dayHoje').onclick = () => { ls.day = ymd(new Date()); crud(cfg); };
     if ($('#dayClr')) $('#dayClr').onclick = () => { ls.day = ''; crud(cfg); };
   }
+  if (cfg.select) $('#selMode').onclick = () => { ls.selMode = !ls.selMode; if (!ls.selMode) ls.sel.clear(); crud(cfg); };
   if (selOn) {
     $('#ckAll').onchange = e => { cur.forEach(r => e.target.checked ? ls.sel.add(r.id) : ls.sel.delete(r.id)); $$('#tb [data-ck]').forEach(ck => ck.checked = e.target.checked); syncSel(); };
     $('#selClr').onclick = () => { ls.sel.clear(); $$('#tb [data-ck]').forEach(ck => ck.checked = false); syncSel(); };
