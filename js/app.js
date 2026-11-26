@@ -255,7 +255,6 @@ function renderLogin(err, email) {
           <li><span class="ck">${ic('check', 14)}</span>Programação de escalas e serviços por cliente e lote</li>
           <li><span class="ck">${ic('check', 14)}</span>Pagamentos de motoristas, terceiros e abastecimentos</li>
           <li><span class="ck">${ic('check', 14)}</span>Controle de recebimentos e pendências financeiras</li>
-          <li><span class="ck">${ic('check', 14)}</span>Dashboard em tempo real e modo TV para a operação</li>
         </ul></div>
       <div class="lg-legal">© 2026 Serafini Transportes. Todos os direitos reservados.</div>
     </aside>
