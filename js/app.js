@@ -61,7 +61,8 @@ const ICONS = {
   building: '<rect x="4" y="2" width="16" height="20" rx="2"/><path d="M9 22v-4h6v4M8 6h.01M12 6h.01M16 6h.01M8 10h.01M12 10h.01M16 10h.01M8 14h.01M12 14h.01M16 14h.01"/>',
   pie: '<path d="M21.2 15.9A10 10 0 1 1 8 2.8"/><path d="M22 12A10 10 0 0 0 12 2v10z"/>',
   image: '<rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.1-3.1a2 2 0 0 0-2.8 0L6 21"/>',
-  share: '<circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.6 13.5 6.8 4M15.4 6.5l-6.8 4"/>'
+  share: '<circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.6 13.5 6.8 4M15.4 6.5l-6.8 4"/>',
+  help: '<circle cx="12" cy="12" r="10"/><path d="M9.1 9a3 3 0 0 1 5.8 1c0 2-3 3-3 3M12 17h.01"/>'
 };
 const ic = (n, s = 16, c = '') => `<svg class="ic ${c}" width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICONS[n] || ''}</svg>`;
 
@@ -316,6 +317,7 @@ function renderShell() {
           <div class="um-head">${userIc('lg')}<div><b>${esc(u.nome)}</b><small>${esc(u.email)}</small><span class="badge b-run" style="margin-top:6px">${esc(u.perfil)}</span></div></div>
           <button class="mi-btn" data-um="perfil">${ic('user')}Meu perfil</button>
           <a class="mi-btn" href="#/usuarios">${ic('users')}Usuários e acessos</a>
+          <a class="mi-btn" href="https://wa.me/5547991058869?text=" target="_blank" rel="noopener" id="umHelp">${ic('help')}Ajuda<small class="mi-sub">WhatsApp do suporte</small></a>
           <button class="mi-btn" data-um="reset">${ic('refresh')}Restaurar dados de demonstração</button>
           <div class="dd-sep"></div>
           <button class="mi-btn danger" data-um="sair">${ic('logout')}Sair</button>
@@ -327,6 +329,7 @@ function renderShell() {
   $$('#um .um-dd a, #um .um-dd button').forEach(b => b.addEventListener('click', () => $('#um').classList.remove('open')));
   $('[data-um=sair]').onclick = logout;
   $('[data-um=perfil]').onclick = profile;
+  $('#umHelp').href = 'https://wa.me/5547991058869?text=' + encodeURIComponent(`Olá! Sou ${u.nome} e preciso de ajuda com o Sistema Serafini Transportes.`);
   $('[data-um=reset]').onclick = () => confirmBox('Restaurar dados de demonstração?', 'Todos os lançamentos feitos nesta demonstração serão substituídos pelos dados fictícios originais.', 'Restaurar dados', () => { S = seed(); if (!me()) store.set(SKEY, 'u1'); renderShell(); save('Dados de demonstração restaurados', '↺'); });
   clock();
 }
