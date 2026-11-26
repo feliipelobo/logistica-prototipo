@@ -654,3 +654,9 @@ main{min-height:calc(100vh - 60px - 58px)}
 .top.scrolled .vsep{background:#d5dae1}
 .top.scrolled .burger{color:#111827;border-color:#d0d6de}
 @supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){.top.scrolled{background:rgba(238,240,243,.95)}}
+/* cinza um pouco mais escuro */
+.top{background:#e2e6eb;box-shadow:0 1px 0 #d0d6de}
+.top .brand,.top.scrolled .brand{border-right-color:#c9d0d9}
+.top .vsep,.top.scrolled .vsep{background:#c9d0d9}
+.top.scrolled{background:rgba(226,230,235,.62)}
+@supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){.top.scrolled{background:rgba(226,230,235,.95)}}
