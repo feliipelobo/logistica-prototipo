@@ -691,3 +691,9 @@ main{min-height:calc(100vh - 60px - 58px)}
 /* alinhamento dos títulos com os valores (seta só ocupa espaço quando a coluna está ordenada) */
 .tbl th .sa:empty{display:none}
 .tbl th.r .sa{margin-left:4px}
+/* mais respiro entre a navbar e o título das páginas */
+main{padding-top:42px}
+.ph{margin-bottom:24px}
+.crumb{margin-bottom:10px}
+@media (max-width:960px){main{padding-top:30px}}
+body.tv main{padding:0}
