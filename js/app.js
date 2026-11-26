@@ -801,8 +801,8 @@ const progCfg = (tipo = 'escala') => ({
       credit: ['Foto: Stanglavine / Wikimedia Commons · CC BY-SA 4.0', 'https://commons.wikimedia.org/wiki/File:Maersk_Lebu_in_Itapo%C3%A1,_Brazil,_2025.jpg'] },
     { img: 'img/porto-itapoa-2.jpg', pos: 'center 60%', alt: 'Navio MSC Abidjan atracado junto ao guindaste no Porto Itapoá',
       credit: ['Foto: caetano051068 / Wikimedia Commons · CC BY-SA 3.0', 'https://commons.wikimedia.org/wiki/File:Porto_de_Itapu%C3%A1_SC_-_panoramio_(2).jpg'] },
-    { img: 'img/porto-itapoa-3.jpg', pos: 'center 86%', alt: 'Guindaste movimentando contêineres no Porto Itapoá',
-      credit: ['Foto: caetano051068 / Wikimedia Commons · CC BY-SA 3.0', 'https://commons.wikimedia.org/wiki/File:Porto_de_Itapu%C3%A1_SC_-_panoramio_(7).jpg'] }
+    { img: 'img/porto-itapoa-3.jpg', pos: 'center 72%', alt: 'Guindastes do Porto Itapoá e navio Monte Pascoal da Hamburg Süd',
+      credit: ['Foto: caetano051068 / Wikimedia Commons · CC BY-SA 3.0', 'https://commons.wikimedia.org/wiki/File:Porto_de_Itapu%C3%A1_SC_-_panoramio_(3).jpg'] }
   ] },
   select: { label: 'Gerar imagem', run: rows => escalaImagem(tipo, rows) },
   detail: progDetail
