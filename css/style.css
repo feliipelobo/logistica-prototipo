@@ -596,3 +596,8 @@ main{min-height:calc(100vh - 60px - 58px)}
 @media (max-width:1180px){.top .brand{padding-right:14px;margin-right:8px}.top .nav-link{padding:0 10px}}
 @media (max-width:960px){.top .brand{border-right:0;padding-right:0}}
 .top .nav-link:focus-visible{outline:2px solid rgba(255,255,255,.35);outline-offset:1px}
+
+/* ===== Barra translúcida ao rolar ===== */
+.top{transition:background-color .25s ease,box-shadow .25s ease,backdrop-filter .25s ease}
+.top.scrolled{background:rgba(7,28,64,.62);-webkit-backdrop-filter:blur(14px) saturate(160%);backdrop-filter:blur(14px) saturate(160%);box-shadow:0 1px 0 rgba(255,255,255,.06),0 8px 24px rgba(7,28,64,.18)}
+@supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){.top.scrolled{background:rgba(7,28,64,.9)}}

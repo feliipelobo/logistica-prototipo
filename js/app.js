@@ -927,5 +927,7 @@ if (!S.fornecedores) S.fornecedores = seedFornecedores();
 store.set(KEY, JSON.stringify(S));
 if (new URLSearchParams(location.search).has('demo') && !me()) store.set(SKEY, 'u1');
 setInterval(clock, 15000);
+const onScroll = () => { const t = $('#top'); if (t) t.classList.toggle('scrolled', window.scrollY > 8); };
+window.addEventListener('scroll', onScroll, { passive: true });
 boot();
 })();
