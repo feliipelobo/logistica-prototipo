@@ -798,3 +798,7 @@ main.has-hero{padding-top:0}
   .hero-k{justify-content:flex-start}
   .hero-a .btn{width:100%}
 }
+.pg-c{max-width:none}
+.hero::after{display:none}
+.hero-in{max-width:none;padding-left:32px;padding-right:32px}
+@media (max-width:960px){.hero-in{padding-left:16px;padding-right:16px}}
