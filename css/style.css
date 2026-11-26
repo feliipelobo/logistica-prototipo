@@ -697,3 +697,5 @@ main{padding-top:42px}
 .crumb{margin-bottom:10px}
 @media (max-width:960px){main{padding-top:30px}}
 body.tv main{padding:0}
+/* colunas um pouco mais compactas para a tabela caber inteira em telas comuns */
+@media (max-width:1600px){.tbl th,.tbl td{padding-left:11px;padding-right:11px}.prog{min-width:96px}.tbl .act>div{gap:0}}

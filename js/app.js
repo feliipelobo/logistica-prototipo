@@ -67,7 +67,7 @@ const ICONS = {
 const ic = (n, s = 16, c = '') => `<svg class="ic ${c}" width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICONS[n] || ''}</svg>`;
 
 /* ---------------- Estado ---------------- */
-const KEY = 'serafini_dados_v3', SKEY = 'serafini_sessao', PKEY = 'serafini_periodo';
+const KEY = 'serafini_dados_v4', SKEY = 'serafini_sessao', PKEY = 'serafini_periodo';
 let S, modalOpen = false, pendingRender = false, timer = null;
 
 function seed() {
@@ -102,7 +102,7 @@ function seed() {
   ];
   const vm = { 150: 60, 180: 70, 210: 85, 240: 95 };
   const progs = [], pagamentos = [], recebimentos = [], abastecimentos = [];
-  const today = new Date(), N = 30;
+  const today = new Date(), N = 15;
   for (let i = 0; i < N; i++) {
     const daysAgo = i >= N - 4 ? 0 : Math.round(55 - (i * 52) / (N - 5));
     const d = new Date(today); d.setDate(d.getDate() - daysAgo);
@@ -137,9 +137,9 @@ function seed() {
     { t: now - 11 * 6e4, icon: '📦', msg: `${mn(act[0].motoristaId)} concluiu viagens no lote ${act[0].lote}: ${act[0].qtdViagens}/${act[0].qtdPrevista}` },
     { t: now - 26 * 6e4, icon: '🗓️', msg: `Nova programação: ${mn(pr[0].motoristaId)} → ${empresas.find(e => e.id === pr[0].clienteId).nome}` },
     { t: now - 48 * 6e4, icon: '⛽', msg: `Abastecimento registrado: ${act[0].placa}` },
-    { t: now - 75 * 6e4, icon: '💸', msg: `Pagamento lançado: ${mn(progs.find(p => p.id === lastPg.progId).motoristaId)} — ${brl(lastPg.qtd * lastPg.valorViagem - lastPg.vale)}` },
-    { t: now - 102 * 6e4, icon: '💰', msg: `Recebimento confirmado: ${progs.find(p => p.id === lastRc.progId).lote} — ${brl(lastRc.valor)}` }
-  ];
+    lastPg && { t: now - 75 * 6e4, icon: '💸', msg: `Pagamento lançado: ${mn(progs.find(p => p.id === lastPg.progId).motoristaId)} — ${brl(lastPg.qtd * lastPg.valorViagem - lastPg.vale)}` },
+    lastRc && { t: now - 102 * 6e4, icon: '💰', msg: `Recebimento confirmado: ${progs.find(p => p.id === lastRc.progId).lote} — ${brl(lastRc.valor)}` }
+  ].filter(Boolean);
   return { empresas, motoristas, veiculos, usuarios, progs, pagamentos, recebimentos, abastecimentos, log };
 }
 function load() { const v = store.get(KEY); if (!v) return null; try { return JSON.parse(v); } catch (e) { return null; } }
