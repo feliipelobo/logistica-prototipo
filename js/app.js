@@ -67,80 +67,35 @@ const ICONS = {
 const ic = (n, s = 16, c = '') => `<svg class="ic ${c}" width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICONS[n] || ''}</svg>`;
 
 /* ---------------- Estado ---------------- */
-const KEY = 'serafini_dados_v4', SKEY = 'serafini_sessao', PKEY = 'serafini_periodo';
+const KEY = 'serafini_dados_v5', SKEY = 'serafini_sessao', PKEY = 'serafini_periodo';
 let S, modalOpen = false, pendingRender = false, timer = null;
 
 function seed() {
-  let x = 20261126;
-  const r = () => { x |= 0; x = (x + 0x6D2B79F5) | 0; let t = Math.imul(x ^ (x >>> 15), 1 | x); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
-  const ri = (a, b) => Math.floor(r() * (b - a + 1)) + a;
-  const pk = a => a[Math.floor(r() * a.length)];
-  const empresas = [
-    { id: 'e1', nome: 'Maersk', cnpj: '02.265.718/0001-04', contato: 'Operações Santos' },
-    { id: 'e2', nome: 'MSC', cnpj: '24.103.267/0001-60', contato: 'Logística Brasil' },
-    { id: 'e3', nome: 'Hapag-Lloyd', cnpj: '03.912.457/0001-33', contato: 'Terminal Sul' },
-    { id: 'e4', nome: 'CMA CGM', cnpj: '01.554.671/0001-70', contato: 'Desembaraço' }
-  ];
-  const motoristas = [
-    { id: 'm1', nome: 'Carlos Griss', cpf: '123.456.789-01', telefone: '(13) 99811-2200', cnh: 'E', tipo: 'Próprio', status: 'Ativo' },
-    { id: 'm2', nome: 'Marcos Almeida', cpf: '234.567.890-12', telefone: '(13) 99722-3311', cnh: 'E', tipo: 'Próprio', status: 'Ativo' },
-    { id: 'm3', nome: 'José Ribeiro', cpf: '345.678.901-23', telefone: '(13) 99633-4422', cnh: 'E', tipo: 'Próprio', status: 'Ativo' },
-    { id: 'm4', nome: 'André Souza', cpf: '456.789.012-34', telefone: '(11) 98544-5533', cnh: 'D', tipo: 'Terceiro', status: 'Ativo' },
-    { id: 'm5', nome: 'Paulo Martins', cpf: '567.890.123-45', telefone: '(11) 98455-6644', cnh: 'E', tipo: 'Terceiro', status: 'Ativo' },
-    { id: 'm6', nome: 'Rafael Costa', cpf: '678.901.234-56', telefone: '(13) 99366-7755', cnh: 'E', tipo: 'Terceiro', status: 'Ativo' }
-  ];
+  // Um registro de exemplo por área (baseado no exemplo da planilha original)
+  const dia = n => { const d = new Date(); d.setDate(d.getDate() + n); return ymd(d); };
+  const empresas = [{ id: 'e1', nome: 'Maersk', cnpj: '02.265.718/0001-04', contato: 'Operações Santos' }];
+  const motoristas = [{ id: 'm1', nome: 'Carlos Griss', cpf: '123.456.789-01', telefone: '(13) 99811-2200', cnh: 'E', tipo: 'Próprio', status: 'Ativo' }];
   motoristas.forEach(m => Object.assign(m, cnhSeed()[m.id]));
-  const veiculos = [
-    { id: 'v1', placa: 'ANS-4G47', modelo: 'Scania R450', tipo: 'Cavalo mecânico', proprietario: 'Frota própria' },
-    { id: 'v2', placa: 'BRA-2E19', modelo: 'Volvo FH 540', tipo: 'Cavalo mecânico', proprietario: 'Frota própria' },
-    { id: 'v3', placa: 'QWE-7H21', modelo: 'DAF XF 530', tipo: 'Cavalo mecânico', proprietario: 'Frota própria' },
-    { id: 'v4', placa: 'RTY-5J88', modelo: 'Mercedes Actros', tipo: 'Cavalo mecânico', proprietario: 'André Souza' },
-    { id: 'v5', placa: 'KLM-9B03', modelo: 'Scania G410', tipo: 'Cavalo mecânico', proprietario: 'Paulo Martins' },
-    { id: 'v6', placa: 'FGH-1C66', modelo: 'Volvo FM 460', tipo: 'Cavalo mecânico', proprietario: 'Rafael Costa' }
+  const veiculos = [{ id: 'v1', placa: 'ANS-4G47', modelo: 'Scania R450', tipo: 'Cavalo mecânico', proprietario: 'Frota própria' }];
+  const usuarios = [{ id: 'u1', nome: 'Leonardo Silva', email: 'leonardo@serafinitransportes.com.br', perfil: 'Supervisor', status: 'Ativo' }];
+  const progs = [
+    { id: 'p1', tipo: 'escala', data: dia(-1), clienteId: 'e1', lote: '25GX5587HR', vaga: 92, motoristaId: 'm1', placa: 'ANS-4G47',
+      valorViagem: 180, valorMotorista: 70, qtdPrevista: 20, qtdViagens: 20, inicio: '15:45', fim: '22:00', status: 'Finalizada', ocorrencia: false, valorOcorrencia: 0 },
+    { id: 'p2', tipo: 'servico', data: dia(0), clienteId: 'e1', lote: '25GX6012HR', vaga: 47, motoristaId: 'm1', placa: 'ANS-4G47',
+      valorViagem: 210, valorMotorista: 85, qtdPrevista: 12, qtdViagens: 5, inicio: '07:30', fim: '', status: 'Em andamento', ocorrencia: false, valorOcorrencia: 0 }
   ];
-  const usuarios = [
-    { id: 'u1', nome: 'Leonardo Silva', email: 'leonardo@serafinitransportes.com.br', perfil: 'Supervisor', status: 'Ativo' }
-  ];
-  const vm = { 150: 60, 180: 70, 210: 85, 240: 95 };
-  const progs = [], pagamentos = [], recebimentos = [], abastecimentos = [];
-  const today = new Date(), N = 15;
-  for (let i = 0; i < N; i++) {
-    const daysAgo = i >= N - 4 ? 0 : Math.round(55 - (i * 52) / (N - 5));
-    const d = new Date(today); d.setDate(d.getDate() - daysAgo);
-    const mi = ri(0, 5);
-    const vv = pk([150, 180, 180, 210, 240]);
-    const prev = ri(8, 24);
-    let status = 'Finalizada', real = prev;
-    if (i >= N - 4) { status = 'Em andamento'; real = ri(3, prev - 3); }
-    if (i >= N - 2) { status = 'Programada'; real = 0; }
-    const p = {
-      id: 'p' + (i + 1), tipo: i % 3 === 2 ? 'servico' : 'escala', data: ymd(d), clienteId: pk(empresas).id,
-      lote: `25GX${ri(1000, 9999)}HR`, vaga: ri(10, 99), motoristaId: motoristas[mi].id, placa: veiculos[mi].placa,
-      valorViagem: vv, valorMotorista: vm[vv], qtdPrevista: prev, qtdViagens: real,
-      inicio: pk(['06:00', '07:30', '14:00', '15:45']), fim: status === 'Finalizada' ? pk(['14:00', '18:30', '22:00']) : '',
-      status, ocorrencia: r() < .12, valorOcorrencia: 0
-    };
-    if (p.ocorrencia) p.valorOcorrencia = pk([80, 120, 250]);
-    progs.push(p);
-    if (status === 'Finalizada') {
-      if (r() < .92) pagamentos.push({ id: 'pg' + (i + 1), progId: p.id, data: ymd(new Date(d.getTime() + 5 * 864e5)), qtd: p.qtdViagens, valorViagem: p.valorMotorista, vale: pk([0, 0, 100, 200]), forma: pk(['PIX', 'PIX', 'TED']) });
-      const rec = r() < .78;
-      recebimentos.push({ id: 'rc' + (i + 1), progId: p.id, data: ymd(new Date(d.getTime() + (rec ? 12 : 20) * 864e5)), valor: p.qtdViagens * p.valorViagem - p.valorOcorrencia, forma: pk(['Boleto', 'TED', 'PIX']), status: rec && daysAgo > 14 ? 'Recebido' : 'Pendente' });
-    }
-    if (r() < .4 || i === N - 4) abastecimentos.push({ id: 'ab' + (i + 1), data: p.data, placa: p.placa, litros: ri(90, 220), valorTotal: 0, local: pk(['Posto Ipiranga BR-116', 'Shell Rodovia Anchieta', 'Posto Graal Imigrantes', 'Petrobras Cubatão']) });
-  }
-  abastecimentos.forEach(a => a.valorTotal = Math.round(a.litros * (5.9 + r() * .5) * 100) / 100);
-  const mn = id => motoristas.find(m => m.id === id).nome;
-  const now = Date.now(), act = progs.filter(p => p.status === 'Em andamento'), pr = progs.filter(p => p.status === 'Programada');
-  const lastPg = pagamentos[pagamentos.length - 1], lastRc = recebimentos.filter(g => g.status === 'Recebido').pop();
+  const pagamentos = [{ id: 'pg1', progId: 'p1', data: dia(0), qtd: 20, valorViagem: 70, vale: 200, forma: 'PIX' }];
+  const recebimentos = [{ id: 'rc1', progId: 'p1', data: dia(0), valor: 3600, forma: 'TED', status: 'Recebido' }];
+  const abastecimentos = [{ id: 'ab1', data: dia(-1), placa: 'ANS-4G47', litros: 180, valorTotal: 1098, local: 'Posto Ipiranga BR-116' }];
+  const now = Date.now();
   const log = [
-    { t: now - 4 * 6e4, icon: '🚛', msg: `${mn(act[1].motoristaId)} iniciou a operação — lote ${act[1].lote}` },
-    { t: now - 11 * 6e4, icon: '📦', msg: `${mn(act[0].motoristaId)} concluiu viagens no lote ${act[0].lote}: ${act[0].qtdViagens}/${act[0].qtdPrevista}` },
-    { t: now - 26 * 6e4, icon: '🗓️', msg: `Nova programação: ${mn(pr[0].motoristaId)} → ${empresas.find(e => e.id === pr[0].clienteId).nome}` },
-    { t: now - 48 * 6e4, icon: '⛽', msg: `Abastecimento registrado: ${act[0].placa}` },
-    lastPg && { t: now - 75 * 6e4, icon: '💸', msg: `Pagamento lançado: ${mn(progs.find(p => p.id === lastPg.progId).motoristaId)} — ${brl(lastPg.qtd * lastPg.valorViagem - lastPg.vale)}` },
-    lastRc && { t: now - 102 * 6e4, icon: '💰', msg: `Recebimento confirmado: ${progs.find(p => p.id === lastRc.progId).lote} — ${brl(lastRc.valor)}` }
-  ].filter(Boolean);
+    { t: now - 5 * 6e4, icon: '📦', msg: 'Carlos Griss concluiu viagens no lote 25GX6012HR: 5/12' },
+    { t: now - 40 * 6e4, icon: '💰', msg: 'Recebimento confirmado: 25GX5587HR — R$ 3.600,00' },
+    { t: now - 55 * 6e4, icon: '💸', msg: 'Pagamento lançado: Carlos Griss — R$ 1.200,00' },
+    { t: now - 90 * 6e4, icon: '🚛', msg: 'Carlos Griss iniciou a operação — lote 25GX6012HR' },
+    { t: now - 20 * 36e5, icon: '🏁', msg: 'Escala finalizada: Carlos Griss — 20 viagens (R$ 3.600,00)' },
+    { t: now - 22 * 36e5, icon: '⛽', msg: 'Abastecimento registrado: ANS-4G47 — 180 L' }
+  ];
   return { empresas, motoristas, veiculos, usuarios, progs, pagamentos, recebimentos, abastecimentos, log };
 }
 function cnhSeed() {
