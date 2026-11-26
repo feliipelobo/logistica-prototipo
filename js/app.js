@@ -137,7 +137,17 @@ function seed() {
     { t: now - 75 * 6e4, icon: '💸', msg: `Pagamento lançado: ${mn(progs.find(p => p.id === lastPg.progId).motoristaId)} — ${brl(lastPg.qtd * lastPg.valorViagem - lastPg.vale)}` },
     { t: now - 102 * 6e4, icon: '💰', msg: `Recebimento confirmado: ${progs.find(p => p.id === lastRc.progId).lote} — ${brl(lastRc.valor)}` }
   ];
-  return { empresas, motoristas, veiculos, usuarios, progs, pagamentos, recebimentos, abastecimentos, log };
+  return { empresas, fornecedores: seedFornecedores(), motoristas, veiculos, usuarios, progs, pagamentos, recebimentos, abastecimentos, log };
+}
+function seedFornecedores() {
+  return [
+    { id: 'f1', nome: 'Posto Ipiranga BR-116', cnpj: '33.337.122/0001-71', categoria: 'Posto de combustível', contato: 'Gerência', telefone: '(13) 3221-4400', status: 'Ativo' },
+    { id: 'f2', nome: 'Shell Rodovia Anchieta', cnpj: '33.453.598/0001-23', categoria: 'Posto de combustível', contato: 'Atendimento frotas', telefone: '(13) 3345-1020', status: 'Ativo' },
+    { id: 'f3', nome: 'Posto Graal Imigrantes', cnpj: '61.064.929/0001-79', categoria: 'Posto de combustível', contato: 'Convênios', telefone: '(11) 4442-8800', status: 'Ativo' },
+    { id: 'f4', nome: 'Petrobras Cubatão', cnpj: '34.274.233/0001-02', categoria: 'Posto de combustível', contato: 'Frotas', telefone: '(13) 3361-2299', status: 'Ativo' },
+    { id: 'f5', nome: 'Oficina Diesel Santos', cnpj: '12.845.330/0001-56', categoria: 'Oficina mecânica', contato: 'Marcelo', telefone: '(13) 99701-3344', status: 'Ativo' },
+    { id: 'f6', nome: 'Pneus Baixada Santista', cnpj: '28.114.903/0001-40', categoria: 'Pneus', contato: 'Vendas', telefone: '(13) 3229-7781', status: 'Ativo' }
+  ];
 }
 function load() { const v = store.get(KEY); if (!v) return null; try { return JSON.parse(v); } catch (e) { return null; } }
 function save(msg, icon) {
@@ -294,10 +304,11 @@ function logout() {
 const NAV = [
   { label: 'Dashboard', icon: 'grid', r: 'dashboard' },
   { label: 'Programação', icon: 'calendar', items: [['escala', 'Programar escala', 'Escalas de motoristas por cliente', 'calendar'], ['servico', 'Programar serviço', 'Serviços avulsos por lote', 'truck']] },
-  { label: 'Pagamentos', icon: 'wallet', items: [['pag-motorista', 'Pagamento de motoristas', 'Motoristas da frota própria', 'user'], ['pag-terceiros', 'Pagamento de terceiros', 'Agregados e terceiros', 'users'], ['abastecimentos', 'Abastecimentos', 'Combustível por veículo', 'fuel']] },
+  { label: 'Pagamentos', icon: 'wallet', items: [['pag-motorista', 'Pagamento de motoristas', 'Motoristas da frota própria', 'user'], ['pag-terceiros', 'Pagamento de terceiros', 'Agregados e terceiros', 'users'], '-', ['abastecimentos', 'Abastecimentos', 'Combustível por veículo', 'fuel']] },
   { label: 'A receber', icon: 'receipt', items: [['rpas', "RPA's", 'Recebimentos de clientes', 'receipt']] },
-  { label: 'Cadastros', icon: 'folder', items: [['motoristas', 'Motoristas', 'Equipe própria e terceiros', 'user'], ['veiculos', 'Veículos', 'Frota e placas', 'truck'], ['empresas', 'Empresas', 'Clientes atendidos', 'building'], ['usuarios', 'Usuários', 'Acessos ao sistema', 'users']] }
+  { label: 'Cadastros', icon: 'folder', items: [['motoristas', 'Motoristas', 'Equipe própria e terceiros', 'user'], ['veiculos', 'Veículos', 'Frota e placas', 'truck'], '-', ['empresas', 'Clientes', 'Empresas atendidas', 'building'], ['fornecedores', 'Fornecedores', 'Postos, oficinas e peças', 'fuel']] }
 ];
+const userIc = (cls = '') => `<span class="u-ic ${cls}"><img src="img/icone-usuario.png" alt=""></span>`;
 function renderShell() {
   const u = me();
   $('#top').innerHTML = `
@@ -306,14 +317,12 @@ function renderShell() {
     <nav class="nav-l" id="navLinks" aria-label="Menu principal"></nav>
     <div class="top-r">
       <button class="live ${timer ? 'on' : ''}" id="btnLive" title="Liga ou desliga a simulação de movimentações em tempo real"><i></i><span>Ao vivo</span></button>
-      <span class="vsep vs-clock"></span>
-      <div class="clock"><b id="clkTime"></b><span id="clkDate"></span></div>
       <span class="vsep"></span>
       <button class="ib-top" id="btnTvTop" title="Modo TV" aria-label="Abrir modo TV">${ic('tv', 18)}</button>
       <div class="um" id="um">
-        <button class="um-btn" id="umBtn" aria-haspopup="menu" aria-expanded="false" title="${esc(u.nome)} · ${esc(u.perfil)}">${avatar(u.nome, 'av-top')}</button>
+        <button class="um-btn" id="umBtn" aria-haspopup="menu" aria-expanded="false" title="${esc(u.nome)} · ${esc(u.perfil)}" aria-label="Menu do usuário">${userIc()}</button>
         <div class="um-dd" role="menu">
-          <div class="um-head">${avatar(u.nome, 'av-lg av-top')}<div><b>${esc(u.nome)}</b><small>${esc(u.email)}</small><span class="badge b-run" style="margin-top:6px">${esc(u.perfil)}</span></div></div>
+          <div class="um-head">${userIc('lg')}<div><b>${esc(u.nome)}</b><small>${esc(u.email)}</small><span class="badge b-run" style="margin-top:6px">${esc(u.perfil)}</span></div></div>
           <button class="mi-btn" data-um="perfil">${ic('user')}Meu perfil</button>
           <a class="mi-btn" href="#/usuarios">${ic('users')}Usuários e acessos</a>
           <button class="mi-btn" data-um="reset">${ic('refresh')}Restaurar dados de demonstração</button>
@@ -332,11 +341,12 @@ function renderShell() {
 }
 function renderNav(route) {
   const on = it => it.r === route || (it.items || []).some(i => i[0] === route);
-  const link = i => `<a class="dd-a ${i[0] === route ? 'on' : ''}" href="#/${i[0]}"><span class="ti">${ic(i[3], 16)}</span><span><b>${i[1]}</b><small>${i[2]}</small></span></a>`;
+  const link = i => i === '-' ? '' : `<a class="dd-a ${i[0] === route ? 'on' : ''}" href="#/${i[0]}"><span class="ti">${ic(i[3], 16)}</span><span><b>${i[1]}</b><small>${i[2]}</small></span></a>`;
+  const simple = i => i === '-' ? '<div class="dd-sep"></div>' : `<a class="dd-s ${i[0] === route ? 'on' : ''}" href="#/${i[0]}">${i[1]}</a>`;
   $('#navLinks').innerHTML = NAV.map(it => it.r
     ? `<div class="nav-item ${on(it) ? 'active' : ''}"><a class="nav-link" href="#/${it.r}">${it.label}</a></div>`
-    : `<div class="nav-item ${on(it) ? 'active' : ''}"><button class="nav-link" type="button" aria-haspopup="true">${it.label}${ic('chev', 13, 'chev')}</button><div class="dd"><div class="dd-in">${it.items.map(link).join('')}</div></div></div>`).join('');
-  $$('#navLinks .dd-a').forEach(a => a.addEventListener('click', () => a.blur()));
+    : `<div class="nav-item ${on(it) ? 'active' : ''}"><button class="nav-link" type="button" aria-haspopup="true">${it.label}${ic('chev', 13, 'chev')}</button><div class="dd"><div class="dd-in">${it.items.map(simple).join('')}</div></div></div>`).join('');
+  $$('#navLinks .dd-s').forEach(a => a.addEventListener('click', () => a.blur()));
   $('#mnav').innerHTML = `<div class="mnav-bg" data-close></div><div class="mnav-p"><div class="mnav-h"><div class="brand"><img src="img/logo-simbolo.png" alt="" style="width:32px;height:32px"><div class="wm"><b>SERAFINI</b><span>TRANSPORTES</span></div></div><button data-close aria-label="Fechar menu">${ic('x', 20)}</button></div>
     <div class="mnav-b">${NAV.map(it => it.r ? link([it.r, it.label, 'Visão geral e indicadores', it.icon]) : `<div class="mnav-g">${it.label}</div>${it.items.map(link).join('')}`).join('')}
     <div class="mnav-g">Apresentação</div>${link(['tv', 'Modo TV', 'Painel em tela cheia', 'tv'])}</div></div>`;
@@ -354,7 +364,7 @@ function clock() {
 function profile() {
   const u = me();
   openModal({ title: 'Meu perfil', sub: 'Dados da sua conta de acesso', body: `
-    <div class="person" style="gap:14px;margin-bottom:18px">${avatar(u.nome, 'av-lg av-top')}<div><b style="font-size:16px;font-weight:600">${esc(u.nome)}</b><div style="color:var(--mut);font-size:13.5px">${esc(u.email)}</div></div></div>
+    <div class="person" style="gap:14px;margin-bottom:18px">${userIc('lg')}<div><b style="font-size:16px;font-weight:600">${esc(u.nome)}</b><div style="color:var(--mut);font-size:13.5px">${esc(u.email)}</div></div></div>
     <div class="dl" style="grid-template-columns:repeat(2,minmax(0,1fr))"><div><span>Perfil</span><b>${esc(u.perfil)}</b></div><div><span>Status</span><b>${esc(u.status || 'Ativo')}</b></div><div><span>Empresa</span><b>Serafini Transportes</b></div><div><span>Sessão iniciada</span><b>${new Date().toLocaleDateString('pt-BR')}</b></div></div>
     <p style="color:var(--mut);font-size:13px;margin:0">Alteração de senha e autenticação em dois fatores estarão disponíveis na versão final.</p>`,
     footer: `<button class="btn btn-sec" data-x>Fechar</button>` });
@@ -570,7 +580,7 @@ const abastCfg = {
   summary: rs => { const l = sumBy(rs, a => a.litros), v = sumBy(rs, a => a.valorTotal); return [['Abastecimentos', num(rs.length), 'fuel', 'Lançamentos registrados'], ['Total em litros', num(l) + ' L', 'fuel', `${num(rs.length ? Math.round(l / rs.length) : 0)} L por abastecimento`], ['Valor total', brl(v), 'dollar', 'Gasto com combustível'], ['Preço médio por litro', brl(l ? v / l : 0), 'trend', 'Média ponderada']]; },
   filter: { label: 'Placa', get: a => a.placa, options: () => S.veiculos.map(v => v.placa) },
   cols: [{ label: 'Data', render: a => fdate(a.data), sv: a => a.data }, { label: 'Placa', k: 'placa', cls: 'mono' }, { label: 'Veículo', render: a => esc(veic(a.placa).modelo || '—') }, { label: 'Local', k: 'local' }, { label: 'Litros', r: 1, sv: a => a.litros, render: a => num(a.litros) }, { label: 'Valor total', r: 1, cls: 'strong', sv: a => a.valorTotal, render: a => brl(a.valorTotal) }, { label: 'R$/L', r: 1, sv: a => a.litros ? a.valorTotal / a.litros : 0, render: a => brl(a.litros ? a.valorTotal / a.litros : 0) }],
-  fields: [{ k: 'data', label: 'Data', type: 'date', req: 1 }, { k: 'placa', label: 'Placa', type: 'select', req: 1, options: () => S.veiculos.map(v => [v.placa, `${v.placa} · ${v.modelo}`]) }, { k: 'litros', label: 'Litros', type: 'number', req: 1 }, { k: 'valorTotal', label: 'Valor total', type: 'number', req: 1 }, { k: 'local', label: 'Local de abastecimento', full: 1, req: 1, ph: 'Ex.: Posto Ipiranga BR-116' }],
+  fields: [{ k: 'data', label: 'Data', type: 'date', req: 1 }, { k: 'placa', label: 'Placa', type: 'select', req: 1, options: () => S.veiculos.map(v => [v.placa, `${v.placa} · ${v.modelo}`]) }, { k: 'litros', label: 'Litros', type: 'number', req: 1 }, { k: 'valorTotal', label: 'Valor total', type: 'number', req: 1 }, { k: 'local', label: 'Local de abastecimento (posto)', type: 'select', full: 1, req: 1, options: v => { const l = S.fornecedores.filter(f => f.categoria === 'Posto de combustível').map(f => f.nome); if (v.local && !l.includes(v.local)) l.push(v.local); return l; } }],
   defaults: () => ({ data: ymd(new Date()) }),
   log: o => `Abastecimento registrado: ${o.placa} — ${brl(o.valorTotal)}`
 };
@@ -608,11 +618,20 @@ const cadastros = {
     defaults: () => ({ tipo: 'Cavalo mecânico', proprietario: 'Frota própria' }), log: (o, n) => `${n ? 'Veículo cadastrado' : 'Veículo atualizado'}: ${o.placa}`
   },
   empresas: {
-    col: 'empresas', group: 'Cadastros', title: 'Empresas', newText: 'Nova empresa', editText: 'Editar empresa', searchPh: 'por nome ou CNPJ', desc: 'Clientes atendidos pela operação.',
+    col: 'empresas', group: 'Cadastros', title: 'Clientes', newText: 'Novo cliente', editText: 'Editar cliente', searchPh: 'por nome ou CNPJ', desc: 'Empresas atendidas pela operação.',
     summary: rs => [['Clientes', num(rs.length), 'building', 'Empresas cadastradas'], ['Faturamento total', brl(sumBy(S.progs, total)), 'dollar', 'Todas as programações'], ['Programações', num(S.progs.length), 'calendar', 'Para todos os clientes']],
     cols: [{ label: 'Empresa', sv: e => e.nome, render: e => person(e.nome) }, { label: 'CNPJ', k: 'cnpj' }, { label: 'Contato', k: 'contato' }, { label: 'Programações', r: 1, sv: e => S.progs.filter(p => p.clienteId === e.id).length, render: e => num(S.progs.filter(p => p.clienteId === e.id).length) }, { label: 'Faturamento', r: 1, cls: 'strong', sv: e => sumBy(S.progs.filter(p => p.clienteId === e.id), total), render: e => brl(sumBy(S.progs.filter(p => p.clienteId === e.id), total)) }],
     fields: [{ k: 'nome', label: 'Razão social / nome fantasia', req: 1, full: 1 }, { k: 'cnpj', label: 'CNPJ', ph: '00.000.000/0000-00' }, { k: 'contato', label: 'Contato' }],
     log: (o, n) => `${n ? 'Empresa cadastrada' : 'Empresa atualizada'}: ${o.nome}`
+  },
+  fornecedores: {
+    col: 'fornecedores', group: 'Cadastros', title: 'Fornecedores', newText: 'Novo fornecedor', editText: 'Editar fornecedor', searchPh: 'por nome, CNPJ ou categoria', desc: 'Postos de combustível, oficinas, pneus e peças usados pela operação.',
+    summary: rs => [['Fornecedores', num(rs.length), 'building', 'Total cadastrado'], ['Postos de combustível', num(rs.filter(f => f.categoria === 'Posto de combustível').length), 'fuel', 'Usados nos abastecimentos'], ['Gasto com combustível', brl(sumBy(S.abastecimentos, a => a.valorTotal)), 'dollar', `${num(S.abastecimentos.length)} abastecimentos`]],
+    filter: { label: 'Categoria', get: f => f.categoria, options: ['Posto de combustível', 'Oficina mecânica', 'Pneus', 'Peças', 'Outros'] },
+    cols: [{ label: 'Fornecedor', sv: f => f.nome, render: f => person(f.nome) }, { label: 'CNPJ', k: 'cnpj' }, { label: 'Categoria', render: f => badge(f.categoria, f.categoria === 'Posto de combustível' ? 'run' : 'no') }, { label: 'Contato', k: 'contato' }, { label: 'Telefone', k: 'telefone' }, { label: 'Abastecimentos', r: 1, sv: f => S.abastecimentos.filter(a => a.local === f.nome).length, render: f => num(S.abastecimentos.filter(a => a.local === f.nome).length) }, { label: 'Status', render: f => badge(f.status || 'Ativo', f.status === 'Inativo' ? 'no' : 'ok') }],
+    fields: [{ k: 'nome', label: 'Razão social / nome fantasia', req: 1, full: 1 }, { k: 'cnpj', label: 'CNPJ', ph: '00.000.000/0000-00' }, { k: 'categoria', label: 'Categoria', type: 'select', req: 1, options: ['Posto de combustível', 'Oficina mecânica', 'Pneus', 'Peças', 'Outros'] }, { k: 'contato', label: 'Contato' }, { k: 'telefone', label: 'Telefone', ph: '(00) 0000-0000' }, { k: 'status', label: 'Status', type: 'select', req: 1, options: ['Ativo', 'Inativo'] }],
+    defaults: () => ({ categoria: 'Posto de combustível', status: 'Ativo' }),
+    log: (o, n) => `${n ? 'Fornecedor cadastrado' : 'Fornecedor atualizado'}: ${o.nome}`
   },
   usuarios: {
     col: 'usuarios', group: 'Cadastros', title: 'Usuários', newText: 'Novo usuário', editText: 'Editar usuário', searchPh: 'por nome ou e-mail', desc: 'O supervisor alimenta e controla todo o sistema e pode incluir outras pessoas para ajudar, acompanhando tudo.',
@@ -841,7 +860,7 @@ const routes = {
   escala: () => crud(progCfg('escala')), servico: () => crud(progCfg('servico')),
   'pag-motorista': () => crud(pagCfg('Próprio')), 'pag-terceiros': () => crud(pagCfg('Terceiro')),
   abastecimentos: () => crud(abastCfg), rpas: () => crud(recCfg),
-  motoristas: () => crud(cadastros.motoristas), veiculos: () => crud(cadastros.veiculos), empresas: () => crud(cadastros.empresas), usuarios: () => crud(cadastros.usuarios)
+  motoristas: () => crud(cadastros.motoristas), veiculos: () => crud(cadastros.veiculos), empresas: () => crud(cadastros.empresas), fornecedores: () => crud(cadastros.fornecedores), usuarios: () => crud(cadastros.usuarios)
 };
 function render(fromChange) {
   if (!me()) return renderLogin();
@@ -904,6 +923,7 @@ function toggleLive() {
 
 /* ---------------- Início ---------------- */
 S = load() || seed();
+if (!S.fornecedores) S.fornecedores = seedFornecedores();
 store.set(KEY, JSON.stringify(S));
 if (new URLSearchParams(location.search).has('demo') && !me()) store.set(SKEY, 'u1');
 setInterval(clock, 15000);
