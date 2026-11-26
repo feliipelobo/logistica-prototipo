@@ -601,3 +601,23 @@ main{min-height:calc(100vh - 60px - 58px)}
 .top{transition:background-color .25s ease,box-shadow .25s ease,backdrop-filter .25s ease}
 .top.scrolled{background:rgba(7,28,64,.62);-webkit-backdrop-filter:blur(14px) saturate(160%);backdrop-filter:blur(14px) saturate(160%);box-shadow:0 1px 0 rgba(255,255,255,.06),0 8px 24px rgba(7,28,64,.18)}
 @supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){.top.scrolled{background:rgba(7,28,64,.9)}}
+
+/* ===== Barra bem transparente ao rolar (vidro claro) ===== */
+.top .wm b,.top .wm span,.top .nav-link,.live,.ib-top,.u-ic,.burger{transition:color .25s ease,background-color .25s ease,border-color .25s ease}
+.top.scrolled{background:rgba(255,255,255,.12);-webkit-backdrop-filter:blur(18px) saturate(180%);backdrop-filter:blur(18px) saturate(180%);box-shadow:0 1px 0 rgba(0,33,71,.08)}
+.top.scrolled .wm b{color:var(--ox)}
+.top.scrolled .wm span{color:var(--green)}
+.top.scrolled .brand{border-right-color:rgba(0,33,71,.14)}
+.top.scrolled .nav-link{color:rgba(0,33,71,.72)}
+.top.scrolled .nav-link:hover,.top.scrolled .nav-item:hover>.nav-link{color:var(--ox);background:rgba(0,33,71,.06)}
+.top.scrolled .nav-item.active>.nav-link{color:var(--ox);background:rgba(0,33,71,.08)}
+.top.scrolled .live{color:rgba(0,33,71,.72)}
+.top.scrolled .live.on{color:var(--ox)}
+.top.scrolled .live:hover{background:rgba(0,33,71,.06);color:var(--ox)}
+.top.scrolled .vsep{background:rgba(0,33,71,.14)}
+.top.scrolled .ib-top{color:rgba(0,33,71,.75)}
+.top.scrolled .ib-top:hover{background:rgba(0,33,71,.06);color:var(--ox)}
+.top.scrolled .um-btn .u-ic{background:var(--ox);border-color:var(--ox)}
+.top.scrolled .burger{color:var(--ox);border-color:rgba(0,33,71,.2)}
+.top.scrolled .nav-link:focus-visible{outline-color:rgba(0,33,71,.35)}
+@supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){.top.scrolled{background:rgba(255,255,255,.92)}}
