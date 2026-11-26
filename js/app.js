@@ -64,6 +64,8 @@ const ICONS = {
   share: '<circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.6 13.5 6.8 4M15.4 6.5l-6.8 4"/>',
   help: '<circle cx="12" cy="12" r="10"/><path d="M9.1 9a3 3 0 0 1 5.8 1c0 2-3 3-3 3M12 17h.01"/>',
   shield: '<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/>',
+  bell: '<path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/>',
+  pin: '<path d="M20 10c0 6-8 12-8 12S4 16 4 10a8 8 0 0 1 16 0z"/><circle cx="12" cy="10" r="3"/>',
   tool: '<path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.8-3.8a6 6 0 0 1-7.9 7.9l-6.9 6.9a2.1 2.1 0 0 1-3-3l6.9-6.9a6 6 0 0 1 7.9-7.9z"/>'
 };
 const ic = (n, s = 16, c = '') => `<svg class="ic ${c}" width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICONS[n] || ''}</svg>`;
@@ -247,6 +249,7 @@ document.addEventListener('keydown', e => {
   if (modalOpen) return closeModal();
   if ($('#mnav').classList.contains('open')) return $('#mnav').classList.remove('open');
   if ($('#um') && $('#um').classList.contains('open')) return $('#um').classList.remove('open');
+  if ($('#nt') && $('#nt').classList.contains('open')) return $('#nt').classList.remove('open');
   if (document.body.classList.contains('tv')) tvExit();
 });
 
@@ -304,12 +307,12 @@ function logout() {
 
 /* ---------------- Estrutura (topo e menu) ---------------- */
 const NAV = [
-  { label: 'Dashboard', icon: 'grid', r: 'dashboard', desc: 'Visão geral e indicadores' },
   { label: 'Programação', icon: 'calendar', items: [['escala', 'Programar escala', 'Escalas de motoristas por cliente', 'calendar']] },
   { label: 'Pagamentos', icon: 'wallet', items: [['pag-motorista', 'Pagamento de motoristas', 'Motoristas próprios e agregados', 'user'], ['pag-terceiros', 'Pagamento de terceiros', 'Serviços de prestadores', 'tool'], ['abastecimentos', 'Abastecimentos', 'Combustível por veículo', 'fuel']] },
   { label: 'A receber', icon: 'receipt', items: [['rpas', "RPA's", 'Recebimentos de clientes', 'receipt']] },
   { label: 'Cadastros', icon: 'folder', items: [['motoristas', 'Motorista', 'Equipe própria e agregados', 'user'], ['veiculos', 'Veículo', 'Frota e placas', 'truck'], ['empresas', 'Empresa', 'Clientes atendidos', 'building'], ['terceiros', 'Terceiro', 'Fornecedores e prestadores', 'tool'], ['usuarios', 'Usuário', 'Acessos ao sistema', 'users']] },
-  { label: 'Controle', icon: 'shield', r: 'controle', group: 'Vencimentos', desc: 'IPVA dos veículos e CNH dos motoristas', count: () => alertas().length }
+  { label: 'Controle', icon: 'shield', r: 'controle', group: 'Vencimentos', desc: 'IPVA dos veículos e CNH dos motoristas', count: () => alertas().length },
+  { label: 'Dashboard', icon: 'grid', r: 'dashboard', group: 'Visão geral', desc: 'Indicadores em tempo real' }
 ];
 const userIc = (cls = '') => `<span class="u-ic ${cls}"><img src="img/icone-usuario.png" alt=""></span>`;
 function renderShell() {
@@ -321,7 +324,9 @@ function renderShell() {
     <div class="top-r">
       <button class="live ${timer ? 'on' : ''}" id="btnLive" title="Liga ou desliga a simulação de movimentações em tempo real"><i></i><span>Ao vivo</span></button>
       <span class="vsep"></span>
-      <button class="ib-top" id="btnTvTop" title="Modo TV" aria-label="Abrir modo TV">${ic('tv', 18)}</button>
+      <div class="nt" id="nt">
+        <button class="ib-top nt-btn" id="ntBtn" aria-haspopup="true" aria-expanded="false" aria-label="Notificações" title="Notificações">${ic('bell', 19)}<span class="nt-c" id="ntC" hidden></span></button>
+        <div class="nt-dd" id="ntDd"></div></div>
       <div class="um" id="um">
         <button class="um-btn" id="umBtn" aria-haspopup="menu" aria-expanded="false" title="${esc(u.nome)} · ${esc(u.perfil)}" aria-label="Menu do usuário">${userIc()}</button>
         <div class="um-dd" role="menu">
@@ -334,9 +339,15 @@ function renderShell() {
           <button class="mi-btn danger" data-um="sair">${ic('logout')}Sair</button>
         </div></div></div>`;
   $('#btnLive').onclick = toggleLive;
-  $('#btnTvTop').onclick = tvEnter;
+  $('#ntBtn').onclick = e => {
+    e.stopPropagation();
+    $('#um').classList.remove('open');
+    const o = $('#nt').classList.toggle('open');
+    $('#ntBtn').setAttribute('aria-expanded', o);
+    if (o) { notifNovas = new Set(notifs().filter(x => !lidas.has(x.id)).map(x => x.id)); renderNotif(); marcarLidas(); }
+  };
   $('#burger').onclick = () => $('#mnav').classList.add('open');
-  $('#umBtn').onclick = e => { e.stopPropagation(); const o = $('#um').classList.toggle('open'); $('#umBtn').setAttribute('aria-expanded', o); };
+  $('#umBtn').onclick = e => { e.stopPropagation(); $('#nt').classList.remove('open'); const o = $('#um').classList.toggle('open'); $('#umBtn').setAttribute('aria-expanded', o); };
   $$('#um .um-dd a, #um .um-dd button').forEach(b => b.addEventListener('click', () => $('#um').classList.remove('open')));
   $('[data-um=sair]').onclick = logout;
   $('[data-um=perfil]').onclick = profile;
@@ -354,12 +365,50 @@ function renderNav(route) {
     : `<div class="nav-item ${on(it) ? 'active' : ''}"><button class="nav-link" type="button" aria-haspopup="true">${it.label}</button><div class="dd"><div class="dd-in">${it.items.map(simple).join('')}</div></div></div>`).join('');
   $$('#navLinks .dd-s').forEach(a => a.addEventListener('click', () => a.blur()));
   if ($('#burger')) $('#burger').classList.toggle('has-al', alertas().length > 0);
+  renderNotif();
   $('#mnav').innerHTML = `<div class="mnav-bg" data-close></div><div class="mnav-p"><div class="mnav-h"><div class="brand"><img src="img/logo-simbolo.png" alt="" style="width:32px;height:32px"><div class="wm"><b>SERAFINI</b><span>TRANSPORTES</span></div></div><button data-close aria-label="Fechar menu">${ic('x', 20)}</button></div>
-    <div class="mnav-b">${NAV.map(it => it.r ? (it.group ? `<div class="mnav-g">${it.label}</div>` : '') + link([it.r, it.group || it.label, it.desc, it.icon], cnt(it)) : `<div class="mnav-g">${it.label}</div>${it.items.map(i => link(i)).join('')}`).join('')}
-    <div class="mnav-g">Apresentação</div>${link(['tv', 'Modo TV', 'Painel em tela cheia', 'tv'])}</div></div>`;
+    <div class="mnav-b">${NAV.map(it => it.r ? (it.group ? `<div class="mnav-g">${it.label}</div>` : '') + link([it.r, it.group || it.label, it.desc, it.icon], cnt(it)) : `<div class="mnav-g">${it.label}</div>${it.items.map(i => link(i)).join('')}`).join('')}</div></div>`;
   $$('#mnav [data-close], #mnav a').forEach(el => el.addEventListener('click', () => $('#mnav').classList.remove('open')));
 }
-document.addEventListener('click', e => { const um = $('#um'); if (um && !um.contains(e.target)) um.classList.remove('open'); });
+document.addEventListener('click', e => {
+  const um = $('#um'), nt = $('#nt');
+  if (um && !um.contains(e.target)) um.classList.remove('open');
+  if (nt && !nt.contains(e.target)) nt.classList.remove('open');
+});
+
+/* ---------------- Notificações ---------------- */
+const NKEY = 'serafini_notif_lidas';
+let lidas = (() => { try { return new Set(JSON.parse(store.get(NKEY) || '[]')); } catch (e) { return new Set(); } })();
+const ago = t => { const m = Math.round((Date.now() - t) / 6e4); return m < 1 ? 'agora' : m < 60 ? `há ${m} min` : m < 1440 ? `há ${Math.round(m / 60)} h` : new Date(t).toLocaleDateString('pt-BR'); };
+function notifs() {
+  const out = [];
+  alertas().forEach(x => out.push({ id: `v:${x.key}:${x.sit[2]}`, icon: 'alert', tone: x.sit[2] === 2 ? 'red' : 'warn', title: `${x.doc} ${x.tipo === 'Veículo' ? 'do veículo' : 'de'} ${x.ident}`, msg: `${x.sit[0]} · ${x.venc}`, tag: 'Vencimento', go: () => { location.hash = '#/controle'; } }));
+  pendencias(S.progs).slice(0, 4).forEach(x => out.push({ id: `p:${x.p.id}:${x.tipo}`, icon: x.tipo === 'Receber' ? 'receipt' : 'wallet', tone: 'info', title: x.tipo === 'Receber' ? `A receber de ${x.quem}` : `A pagar para ${x.quem}`, msg: `${brl(x.valor)} · lote ${x.p.lote} · ${x.dias} dia${x.dias === 1 ? '' : 's'} em aberto`, tag: 'Financeiro', go: () => progDetail(x.p) }));
+  S.log.filter(l => Date.now() - l.t < 2 * 864e5).slice(0, 8).forEach(l => { const [i, t] = feedIc(l.icon); out.push({ id: `l:${l.t}`, icon: i, tone: t, title: l.msg, msg: '', tag: ago(l.t) }); });
+  return out;
+}
+let notifCache = [], notifNovas = new Set();
+function renderNotif() {
+  const c = $('#ntC'), dd = $('#ntDd'); if (!c || !dd) return;
+  const open = $('#nt').classList.contains('open');
+  notifCache = notifs();
+  const n = notifCache.filter(x => !lidas.has(x.id)).length;
+  c.hidden = !n || open; c.textContent = n > 9 ? '9+' : n;
+  $('#ntBtn').title = n ? `${n} notificação(ões) nova(s)` : 'Notificações';
+  if (!open) return;
+  dd.innerHTML = `<div class="nt-h"><b>Notificações</b><span>${notifNovas.size ? `${notifNovas.size} nova${notifNovas.size === 1 ? '' : 's'}` : 'Tudo em dia'}</span></div>
+    <div class="nt-l">${notifCache.length ? notifCache.map((x, i) => `<button class="nt-i ${notifNovas.has(x.id) ? 'new' : ''} ${x.go ? '' : 'ro'}" data-n="${i}" type="button"><span class="f-ic t-${x.tone}">${ic(x.icon, 15)}</span><span class="nt-x"><b>${esc(x.title)}</b>${x.msg ? `<small>${esc(x.msg)}</small>` : ''}<em>${esc(x.tag)}</em></span></button>`).join('')
+      : `<div class="nt-e">${ic('check', 18)}<span>Nenhuma notificação no momento.</span></div>`}</div>
+    <a class="nt-f" href="#/dashboard">Ver painel completo</a>`;
+  $$('#ntDd [data-n]').forEach(b => b.onclick = e => { e.stopPropagation(); const x = notifCache[+b.dataset.n]; if (!x.go) return; $('#nt').classList.remove('open'); x.go(); });
+  $('#ntDd .nt-f').onclick = () => $('#nt').classList.remove('open');
+}
+function marcarLidas() {
+  notifCache.forEach(x => lidas.add(x.id));
+  lidas = new Set([...lidas].slice(-300));
+  store.set(NKEY, JSON.stringify([...lidas]));
+  $('#ntC').hidden = true;
+}
 const DIAS = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'], MESES = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez'];
 function clock() {
   const d = new Date();
@@ -393,7 +442,21 @@ function bindSum() {
     $('em', b).textContent = off ? 'Mostrar' : 'Ocultar';
   };
 }
-const noteBox = h => `<div class="note">${ic('info', 17)}<div>${h}</div></div>`;
+/* Banner com foto (área de programação) */
+function heroHead(cfg, rows) {
+  const hoje = rows.filter(r => r.data === ymd(new Date()));
+  const and = rows.filter(r => r.status === 'Em andamento').length;
+  return `<section class="hero">
+    <img class="hero-img" src="${cfg.hero.img}" alt="${esc(cfg.hero.alt)}">
+    <div class="hero-top"><div class="hero-k"><span><b>${num(hoje.length)}</b> ${hoje.length === 1 ? 'escala hoje' : 'escalas hoje'}</span><span><b>${num(and)}</b> em andamento</span></div><span class="hero-tag">${ic('pin', 13)}${esc(cfg.hero.place)}</span></div>
+    ${cfg.hero.credit ? `<a class="hero-cr" href="${cfg.hero.credit[1]}" target="_blank" rel="noopener">${esc(cfg.hero.credit[0])}</a>` : ''}
+    <div class="hero-in">
+      <div class="hero-t"><nav class="crumb" aria-label="Você está em"><span>Início</span>${ic('chevR', 13)}<span>${cfg.group}</span>${ic('chevR', 13)}<b>${cfg.title}</b></nav>
+        <h1>${cfg.title}</h1><p>${cfg.desc}</p></div>
+      <div class="hero-a"><button class="btn btn-hero" id="novo">${ic('plus')}${cfg.newText}</button></div>
+    </div></section>`;
+}
+const noteBox = h =>`<div class="note">${ic('info', 17)}<div>${h}</div></div>`;
 let ls = { key: null, q: '', f: '', day: '', s: -1, d: 1, sel: new Set() };
 const cellTxt = (c, r) => c.render ? stripHtml(String(c.render(r))) : String(r[c.k] ?? '');
 function crud(cfg) {
@@ -403,8 +466,8 @@ function crud(cfg) {
   const sum = cfg.summary ? cfg.summary(all) : [];
   const fopts = cfg.filter ? (typeof cfg.filter.options === 'function' ? cfg.filter.options() : cfg.filter.options) : [];
   const selOn = !!cfg.select && ls.selMode;
-  $('#app').innerHTML = `
-    ${pageHead(cfg.group, cfg.title, cfg.desc, `<button class="btn btn-pri" id="novo">${ic('plus')}${cfg.newText}</button>`)}
+  $('#app').innerHTML = `<div class="${cfg.hero ? 'pg-c' : 'pg'}">
+    ${cfg.hero ? heroHead(cfg, all) : pageHead(cfg.group, cfg.title, cfg.desc, `<button class="btn btn-pri" id="novo">${ic('plus')}${cfg.newText}</button>`)}
     ${cfg.note ? noteBox(cfg.note) : ''}
     ${sumBlock(sum)}
     <div class="panel">
@@ -419,7 +482,7 @@ function crud(cfg) {
       ${selOn ? `<div class="selbar" id="selbar" hidden><span id="selTxt"></span><button class="lnk" id="selClr" type="button">Limpar seleção</button></div>` : ''}
       <div class="tscroll"><table class="tbl"><thead><tr>${selOn ? `<th class="ck-c"><input type="checkbox" id="ckAll" aria-label="Selecionar todos"></th>` : ''}${cfg.cols.map((c, i) => `<th class="sortable ${c.r ? 'r' : ''}" data-s="${i}" title="Ordenar">${c.label}<span class="sa">${ls.s === i ? (ls.d > 0 ? '↑' : '↓') : ''}</span></th>`).join('')}<th class="act" aria-label="Ações"></th></tr></thead><tbody id="tb"></tbody></table></div>
       <div class="tbl-foot"><span id="cnt2"></span><span>${selOn ? 'Marque as programações e clique em “' + cfg.select.label + '”' : cfg.detail ? 'Clique em uma linha para ver os detalhes' : 'Clique no título da coluna para ordenar'}</span></div>
-    </div>`;
+    </div></div>`;
   let cur = [];
   const syncSel = () => {
     if (!selOn) return;
@@ -712,6 +775,8 @@ const progCfg = (tipo = 'escala') => ({
   beforeSave: o => { o.tipo = tipo; if (o.status === 'Finalizada' && !o.qtdViagens) o.qtdViagens = o.qtdPrevista; },
   log: (o, n) => `${n ? 'Nova programação' : 'Programação atualizada'}: lote ${o.lote} — ${nome('motoristas', o.motoristaId)}`,
   dayFilter: true,
+  hero: { img: 'img/porto-itapoa.jpg', alt: 'Navio porta-contêineres da Maersk atracado no Porto Itapoá', place: 'Porto Itapoá · SC',
+    credit: ['Foto: Stanglavine / Wikimedia Commons · CC BY-SA 4.0', 'https://commons.wikimedia.org/wiki/File:Maersk_Lebu_in_Itapo%C3%A1,_Brazil,_2025.jpg'] },
   select: { label: 'Gerar imagem', run: rows => escalaImagem(tipo, rows) },
   detail: progDetail
 });
@@ -1188,7 +1253,7 @@ const onScroll = () => {
   const t = $('#top'); if (!t) return;
   const y = Math.max(0, window.scrollY), um = $('#um');
   t.classList.toggle('scrolled', y > 8);
-  if (y < 80 || (um && um.classList.contains('open'))) t.classList.remove('nav-hidden');
+  if (y < 80 || (um && um.classList.contains('open')) || ($('#nt') && $('#nt').classList.contains('open'))) t.classList.remove('nav-hidden');
   else if (y > lastY + 4) t.classList.add('nav-hidden');
   else if (y < lastY - 4) t.classList.remove('nav-hidden');
   if (Math.abs(y - lastY) > 4) lastY = y;
