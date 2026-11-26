@@ -322,8 +322,6 @@ function renderShell() {
     <a class="brand" href="#/dashboard" aria-label="Serafini Transportes, ir para o início"><img src="img/logo-simbolo.png" alt=""><div class="wm"><b>SERAFINI</b><span>TRANSPORTES</span></div></a>
     <nav class="nav-l" id="navLinks" aria-label="Menu principal"></nav>
     <div class="top-r">
-      <button class="live ${timer ? 'on' : ''}" id="btnLive" title="Liga ou desliga a simulação de movimentações em tempo real"><i></i><span>Ao vivo</span></button>
-      <span class="vsep"></span>
       <div class="nt" id="nt">
         <button class="ib-top nt-btn" id="ntBtn" aria-haspopup="true" aria-expanded="false" aria-label="Notificações" title="Notificações">${ic('bell', 19)}<span class="nt-c" id="ntC" hidden></span></button>
         <div class="nt-dd" id="ntDd"></div></div>
@@ -338,7 +336,6 @@ function renderShell() {
           <div class="dd-sep"></div>
           <button class="mi-btn danger" data-um="sair">${ic('logout')}Sair</button>
         </div></div></div>`;
-  $('#btnLive').onclick = toggleLive;
   $('#ntBtn').onclick = e => {
     e.stopPropagation();
     $('#um').classList.remove('open');
