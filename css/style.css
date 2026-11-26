@@ -832,3 +832,14 @@ main.has-hero{padding-top:0}
 .hero::before{background:linear-gradient(90deg,rgba(0,0,0,.72) 0%,rgba(0,0,0,.5) 32%,rgba(0,0,0,.26) 65%,rgba(0,0,0,.2) 100%),linear-gradient(0deg,rgba(0,0,0,.55) 0%,rgba(0,0,0,0) 50%),linear-gradient(180deg,rgba(0,0,0,.3) 0%,rgba(0,0,0,0) 22%)}
 .hero-k span{background:rgba(0,0,0,.45);border-color:rgba(255,255,255,.2)}
 @media (max-width:700px){.hero::before{background:linear-gradient(0deg,rgba(0,0,0,.85) 0%,rgba(0,0,0,.5) 60%,rgba(0,0,0,.3) 100%)}}
+/* slideshow do banner: troca com fade + zoom lento contínuo; escurecido mais leve */
+.hero-img{opacity:0;transition:opacity 1.6s ease;filter:brightness(.92) saturate(1.06) contrast(1.05);animation:heroKB 18s ease-in-out infinite alternate;will-change:transform,opacity}
+.hero-img.on{opacity:1}
+@keyframes heroKB{from{transform:scale(1.02) translate3d(0,0,0)}to{transform:scale(1.1) translate3d(-1.2%,-1%,0)}}
+@media (prefers-reduced-motion:reduce){.hero-img{animation:none;transform:none;transition:none}}
+.hero::before{background:linear-gradient(90deg,rgba(0,0,0,.58) 0%,rgba(0,0,0,.36) 32%,rgba(0,0,0,.14) 65%,rgba(0,0,0,.08) 100%),linear-gradient(0deg,rgba(0,0,0,.42) 0%,rgba(0,0,0,0) 48%),linear-gradient(180deg,rgba(0,0,0,.2) 0%,rgba(0,0,0,0) 20%)}
+.hero-dots{position:absolute;left:50%;bottom:14px;transform:translateX(-50%);display:flex;gap:8px;z-index:1}
+.hero-dots button{width:26px;height:4px;padding:0;border:0;border-radius:4px;background:rgba(255,255,255,.4);cursor:pointer;transition:background .25s,width .25s}
+.hero-dots button:hover{background:rgba(255,255,255,.7)}
+.hero-dots button.on{width:40px;background:#fff}
+@media (max-width:700px){.hero::before{background:linear-gradient(0deg,rgba(0,0,0,.78) 0%,rgba(0,0,0,.4) 60%,rgba(0,0,0,.2) 100%)}.hero-dots{left:auto;right:16px;transform:none;bottom:10px}}

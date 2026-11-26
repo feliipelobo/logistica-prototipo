@@ -443,10 +443,12 @@ function bindSum() {
 function heroHead(cfg, rows) {
   const hoje = rows.filter(r => r.data === ymd(new Date()));
   const and = rows.filter(r => r.status === 'Em andamento').length;
-  const h = cfg.hero;
-  return `<section class="hero">
-    <img class="hero-img" src="${h.img}" alt="${esc(h.alt)}"><span class="hero-bar"></span>
-    ${h.credit ? `<a class="hero-cr" href="${h.credit[1]}" target="_blank" rel="noopener">${esc(h.credit[0])}</a>` : ''}
+  const h = cfg.hero, sl = h.slides, i0 = heroIdx % sl.length;
+  return `<section class="hero" id="hero">
+    ${sl.map((s, i) => `<img class="hero-img ${i === i0 ? 'on' : ''}" src="${s.img}" alt="${esc(s.alt)}" style="object-position:${s.pos};animation-delay:-${i * 6}s">`).join('')}
+    <span class="hero-bar"></span>
+    <a class="hero-cr" id="heroCr" href="${sl[i0].credit[1]}" target="_blank" rel="noopener">${esc(sl[i0].credit[0])}</a>
+    ${sl.length > 1 ? `<div class="hero-dots">${sl.map((s, i) => `<button type="button" class="${i === i0 ? 'on' : ''}" data-hs="${i}" aria-label="Mostrar foto ${i + 1}"></button>`).join('')}</div>` : ''}
     <div class="hero-in">
       <div class="hero-t">
         <h1 aria-label="${esc(cfg.title)}"><span class="h-l">${esc(h.t1)}</span><span class="h-b">${esc(h.t2)}</span></h1>
@@ -458,6 +460,20 @@ function heroHead(cfg, rows) {
         <button class="btn btn-hero" id="novo">${ic('plus')}${cfg.newText}</button>
       </div>
     </div></section>`;
+}
+/* Troca automática das fotos do banner (fade a cada 7 s) */
+let heroIdx = 0, heroTimer = null;
+function heroStart(sl) {
+  clearInterval(heroTimer); heroTimer = null;
+  const imgs = $$('#hero .hero-img'); if (imgs.length < 2) return;
+  const go = i => {
+    heroIdx = (i + sl.length) % sl.length;
+    imgs.forEach((im, k) => im.classList.toggle('on', k === heroIdx));
+    $$('#hero [data-hs]').forEach((d, k) => d.classList.toggle('on', k === heroIdx));
+    const c = $('#heroCr'); if (c) { c.href = sl[heroIdx].credit[1]; c.textContent = sl[heroIdx].credit[0]; }
+  };
+  $$('#hero [data-hs]').forEach(d => d.onclick = () => { go(+d.dataset.hs); heroStart(sl); });
+  heroTimer = setInterval(() => { if (!document.hidden) go(heroIdx + 1); }, 7000);
 }
 const noteBox = h =>`<div class="note">${ic('info', 17)}<div>${h}</div></div>`;
 let ls = { key: null, q: '', f: '', day: '', s: -1, d: 1, sel: new Set() };
@@ -525,6 +541,7 @@ function crud(cfg) {
   };
   view();
   bindSum();
+  if (cfg.hero) heroStart(cfg.hero.slides);
   $('#q').oninput = e => { ls.q = e.target.value; view(); };
   if (cfg.filter) $('#flt').onchange = e => { ls.f = e.target.value; view(); };
   if (cfg.dayFilter) {
@@ -779,8 +796,14 @@ const progCfg = (tipo = 'escala') => ({
   beforeSave: o => { o.tipo = tipo; if (o.status === 'Finalizada' && !o.qtdViagens) o.qtdViagens = o.qtdPrevista; },
   log: (o, n) => `${n ? 'Nova programação' : 'Programação atualizada'}: lote ${o.lote} — ${nome('motoristas', o.motoristaId)}`,
   dayFilter: true,
-  hero: { img: 'img/porto-itapoa.jpg', alt: 'Navio porta-contêineres da Maersk atracado no Porto Itapoá', place: 'Porto Itapoá · SC', t1: 'Programar', t2: 'Escala',
-    credit: ['Foto: Stanglavine / Wikimedia Commons · CC BY-SA 4.0', 'https://commons.wikimedia.org/wiki/File:Maersk_Lebu_in_Itapo%C3%A1,_Brazil,_2025.jpg'] },
+  hero: { place: 'Porto Itapoá · SC', t1: 'Programar', t2: 'Escala', slides: [
+    { img: 'img/porto-itapoa.jpg', pos: 'center 72%', alt: 'Navio porta-contêineres da Maersk atracado no Porto Itapoá',
+      credit: ['Foto: Stanglavine / Wikimedia Commons · CC BY-SA 4.0', 'https://commons.wikimedia.org/wiki/File:Maersk_Lebu_in_Itapo%C3%A1,_Brazil,_2025.jpg'] },
+    { img: 'img/porto-itapoa-2.jpg', pos: 'center 60%', alt: 'Navio MSC Abidjan atracado junto ao guindaste no Porto Itapoá',
+      credit: ['Foto: caetano051068 / Wikimedia Commons · CC BY-SA 3.0', 'https://commons.wikimedia.org/wiki/File:Porto_de_Itapu%C3%A1_SC_-_panoramio_(2).jpg'] },
+    { img: 'img/porto-itapoa-3.jpg', pos: 'center 86%', alt: 'Guindaste movimentando contêineres no Porto Itapoá',
+      credit: ['Foto: caetano051068 / Wikimedia Commons · CC BY-SA 3.0', 'https://commons.wikimedia.org/wiki/File:Porto_de_Itapu%C3%A1_SC_-_panoramio_(7).jpg'] }
+  ] },
   select: { label: 'Gerar imagem', run: rows => escalaImagem(tipo, rows) },
   detail: progDetail
 });
@@ -1196,6 +1219,7 @@ function render(fromChange) {
   if (route !== 'tv' && document.body.classList.contains('tv')) tvStop();
   if (!fromChange) ls.key = null;
   $('#app').classList.remove('has-hero');
+  clearInterval(heroTimer); heroTimer = null;
   renderNav(route);
   const a = document.activeElement, caret = a && a.id === 'q' ? a.selectionStart : null;
   routes[route]();
