@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LogiControl · Gestão de Cargas e Financeiro</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ccircle cx='32' cy='32' r='30' fill='%2330b84a'/%3E%3Cpath d='M20 44l8-20 8 20zM34 44l8-16 8 16z' fill='%230a2463'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<header class="top">
+  <div class="brand">
+    <svg viewBox="0 0 64 64" width="44" height="44" aria-hidden="true"><circle cx="32" cy="32" r="30" fill="#30b84a" stroke="#fff" stroke-width="2"/><path d="M14 46L25 20l11 26zM30 46l10-20 10 20z" fill="#0a2463"/></svg>
+    <div><strong>LogiControl</strong><small>Gestão de Cargas &amp; Financeiro</small></div>
+  </div>
+  <div class="top-right">
+    <button id="btnLive" class="btn live" title="Simula movimentações em tempo real">▶ Modo ao vivo</button>
+    <button id="btnReset" class="btn ghost" title="Restaurar dados fictícios">↺ Restaurar demo</button>
+    <div class="user"><span class="avatar">AD</span><span>Administrador</span></div>
+  </div>
+</header>
+
+<nav class="menu" id="menu">
+  <div class="mi"><a href="#/dashboard" data-r="dashboard">Dashboard</a></div>
+  <div class="mi"><span>Programação ▾</span><div class="sub">
+    <a href="#/escala" data-r="escala">Programar escala</a>
+    <a href="#/servico" data-r="servico">Programar serviço</a></div></div>
+  <div class="mi"><span>Pagamentos ▾</span><div class="sub">
+    <a href="#/pag-motorista" data-r="pag-motorista">Pag. motorista</a>
+    <a href="#/pag-terceiros" data-r="pag-terceiros">Pag. terceiros</a>
+    <a href="#/abastecimentos" data-r="abastecimentos">Abastecimentos</a></div></div>
+  <div class="mi"><span>A receber ▾</span><div class="sub">
+    <a href="#/rpas" data-r="rpas">RPA's</a></div></div>
+  <div class="mi"><span>Cadastro ▾</span><div class="sub">
+    <a href="#/motoristas" data-r="motoristas">Motorista</a>
+    <a href="#/veiculos" data-r="veiculos">Veículo</a>
+    <a href="#/empresas" data-r="empresas">Empresa</a>
+    <a href="#/usuarios" data-r="usuarios">Usuário</a></div></div>
+</nav>
+
+<main id="app"></main>
+<div id="modal" class="modal" hidden></div>
+<div id="toasts"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
