@@ -802,3 +802,8 @@ main.has-hero{padding-top:0}
 .hero::after{display:none}
 .hero-in{max-width:none;padding-left:32px;padding-right:32px}
 @media (max-width:960px){.hero-in{padding-left:16px;padding-right:16px}}
+/* mais respiro entre a barra do menu e o conteúdo */
+main{padding-top:64px}
+main.has-hero{padding-top:0}
+.hero{margin-bottom:40px}
+@media (max-width:960px){main{padding-top:40px}main.has-hero{padding-top:0}.hero{margin-bottom:28px}}
