@@ -89,6 +89,7 @@ function seed() {
     { id: 'm5', nome: 'Paulo Martins', cpf: '567.890.123-45', telefone: '(11) 98455-6644', cnh: 'E', tipo: 'Terceiro', status: 'Ativo' },
     { id: 'm6', nome: 'Rafael Costa', cpf: '678.901.234-56', telefone: '(13) 99366-7755', cnh: 'E', tipo: 'Terceiro', status: 'Ativo' }
   ];
+  motoristas.forEach(m => Object.assign(m, cnhSeed()[m.id]));
   const veiculos = [
     { id: 'v1', placa: 'ANS-4G47', modelo: 'Scania R450', tipo: 'Cavalo mecânico', proprietario: 'Frota própria' },
     { id: 'v2', placa: 'BRA-2E19', modelo: 'Volvo FH 540', tipo: 'Cavalo mecânico', proprietario: 'Frota própria' },
@@ -141,6 +142,22 @@ function seed() {
     lastRc && { t: now - 102 * 6e4, icon: '💰', msg: `Recebimento confirmado: ${progs.find(p => p.id === lastRc.progId).lote} — ${brl(lastRc.valor)}` }
   ].filter(Boolean);
   return { empresas, motoristas, veiculos, usuarios, progs, pagamentos, recebimentos, abastecimentos, log };
+}
+function cnhSeed() {
+  const em = d => { const x = new Date(); x.setDate(x.getDate() + d); return ymd(x); };
+  return {
+    m1: { cnhNum: '04518237610', cnhVal: em(920) }, m2: { cnhNum: '05129834472', cnhVal: em(1240) },
+    m3: { cnhNum: '03876512093', cnhVal: em(-12) }, m4: { cnhNum: '06231875540', cnhVal: em(18) },
+    m5: { cnhNum: '04790213385', cnhVal: em(610) }, m6: { cnhNum: '05583029147', cnhVal: em(1460) }
+  };
+}
+const diasAte = s => { if (!s) return null; const [y, m, d] = s.split('-').map(Number); const h = new Date(); h.setHours(0, 0, 0, 0); return Math.round((new Date(y, m - 1, d) - h) / 864e5); };
+function cnhStatus(m) {
+  const d = diasAte(m.cnhVal);
+  if (d === null) return '<span style="color:var(--sub)">—</span>';
+  if (d < 0) return `${fdate(m.cnhVal)} ${badge('Vencida', 'bad')}`;
+  if (d <= 30) return `${fdate(m.cnhVal)} ${badge(d === 0 ? 'Vence hoje' : `Vence em ${d} dia${d === 1 ? '' : 's'}`, 'wait')}`;
+  return fdate(m.cnhVal);
 }
 function load() { const v = store.get(KEY); if (!v) return null; try { return JSON.parse(v); } catch (e) { return null; } }
 function save(msg, icon) {
@@ -737,8 +754,8 @@ const cadastros = {
     col: 'motoristas', group: 'Cadastros', title: 'Motoristas', newText: 'Novo motorista', editText: 'Editar motorista', searchPh: 'por nome, CPF ou telefone', desc: 'Motoristas da frota própria e terceiros que podem ser programados.',
     summary: rs => [['Motoristas', num(rs.length), 'users', 'Total cadastrado'], ['Frota própria', num(rs.filter(m => m.tipo === 'Próprio').length), 'user', 'Motoristas próprios'], ['Terceiros', num(rs.filter(m => m.tipo === 'Terceiro').length), 'users', 'Agregados e terceiros'], ['Ativos', num(rs.filter(m => m.status === 'Ativo').length), 'check', 'Disponíveis para programação']],
     filter: { label: 'Tipo', get: m => m.tipo, options: ['Próprio', 'Terceiro'] },
-    cols: [{ label: 'Nome', sv: m => m.nome, render: m => person(m.nome) }, { label: 'CPF', k: 'cpf' }, { label: 'Telefone', k: 'telefone' }, { label: 'CNH', k: 'cnh' }, { label: 'Tipo', render: m => badge(m.tipo, m.tipo === 'Próprio' ? 'run' : 'no') }, { label: 'Viagens', r: 1, sv: m => sumBy(S.progs.filter(p => p.motoristaId === m.id), p => p.qtdViagens), render: m => num(sumBy(S.progs.filter(p => p.motoristaId === m.id), p => p.qtdViagens)) }, { label: 'Status', render: m => badge(m.status, m.status === 'Ativo' ? 'ok' : 'no') }],
-    fields: [{ k: 'nome', label: 'Nome completo', req: 1, full: 1 }, { k: 'cpf', label: 'CPF', req: 1, ph: '000.000.000-00' }, { k: 'telefone', label: 'Telefone', ph: '(00) 00000-0000' }, { k: 'cnh', label: 'Categoria da CNH', type: 'select', options: ['C', 'D', 'E'] }, { k: 'tipo', label: 'Tipo', type: 'select', req: 1, options: ['Próprio', 'Terceiro'] }, { k: 'status', label: 'Status', type: 'select', req: 1, options: ['Ativo', 'Inativo'] }],
+    cols: [{ label: 'Nome', sv: m => m.nome, render: m => person(m.nome) }, { label: 'CPF', k: 'cpf' }, { label: 'Telefone', k: 'telefone' }, { label: 'CNH', sv: m => m.cnhNum || '', render: m => m.cnhNum ? `${esc(m.cnhNum)} <span style="color:var(--mut)">· ${esc(m.cnh || '—')}</span>` : `<span style="color:var(--sub)">Cat. ${esc(m.cnh || '—')}</span>` }, { label: 'Validade da CNH', sv: m => m.cnhVal || '', render: cnhStatus }, { label: 'Tipo', render: m => badge(m.tipo, m.tipo === 'Próprio' ? 'run' : 'no') }, { label: 'Viagens', r: 1, sv: m => sumBy(S.progs.filter(p => p.motoristaId === m.id), p => p.qtdViagens), render: m => num(sumBy(S.progs.filter(p => p.motoristaId === m.id), p => p.qtdViagens)) }, { label: 'Status', render: m => badge(m.status, m.status === 'Ativo' ? 'ok' : 'no') }],
+    fields: [{ k: 'nome', label: 'Nome completo', req: 1, full: 1 }, { k: 'cpf', label: 'CPF', req: 1, ph: '000.000.000-00' }, { k: 'telefone', label: 'Telefone', ph: '(00) 00000-0000' }, { k: 'cnhNum', label: 'Número da CNH', req: 1, ph: '00000000000' }, { k: 'cnh', label: 'Categoria da CNH', type: 'select', req: 1, options: ['C', 'D', 'E'] }, { k: 'cnhVal', label: 'Validade da CNH', type: 'date', req: 1 }, { k: 'tipo', label: 'Tipo', type: 'select', req: 1, options: ['Próprio', 'Terceiro'] }, { k: 'status', label: 'Status', type: 'select', req: 1, options: ['Ativo', 'Inativo'] }],
     defaults: () => ({ tipo: 'Próprio', status: 'Ativo', cnh: 'E' }), log: (o, n) => `${n ? 'Motorista cadastrado' : 'Motorista atualizado'}: ${o.nome}`
   },
   veiculos: {
@@ -1045,6 +1062,7 @@ function toggleLive() {
 
 /* ---------------- Início ---------------- */
 S = load() || seed();
+S.motoristas.forEach(m => { const c = cnhSeed()[m.id]; if (!m.cnhNum && c) Object.assign(m, c); });
 store.set(KEY, JSON.stringify(S));
 if (new URLSearchParams(location.search).has('demo') && !me()) store.set(SKEY, 'u1');
 setInterval(clock, 15000);
