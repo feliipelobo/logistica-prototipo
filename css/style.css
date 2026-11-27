@@ -908,3 +908,34 @@ main.has-hero{padding-top:0}
 .tbl th.act,.tbl td.act,.tbl .ck-c{text-align:center}
 .tbl td .prog{margin:0 auto}
 .tbl td .person{text-align:left}
+
+/* =========================================================
+   Navbar branca, estilo institucional (logo grande, menu em maiúsculas)
+   ========================================================= */
+.top,.top.scrolled{height:78px;padding:0 44px;background:#fff;border-bottom:1px solid #e6e9ee;box-shadow:none;-webkit-backdrop-filter:none;backdrop-filter:none}
+.top.scrolled{box-shadow:0 4px 18px rgba(16,24,40,.07)}
+.top .brand,.top.scrolled .brand{height:auto;padding-right:0;margin-right:auto;border-right:0;gap:12px}
+.top .brand img{width:50px;height:50px}
+.top .wm2{line-height:1.08}
+.top .wm2 b,.top.scrolled .wm2 b{font-size:22px;font-weight:400;letter-spacing:0;color:#5b6270}
+.top .wm2 span,.top.scrolled .wm2 span{font-size:15px;font-weight:700;letter-spacing:0;margin-top:1px;color:#5b6270;text-transform:none}
+.top .nav-l{flex:0 1 auto;margin-left:auto;gap:6px}
+.top .nav-link,.top.scrolled .nav-link{height:40px;padding:0 14px;border-radius:0;background:none;box-shadow:none;color:#5b6270;font-size:13.5px;font-weight:500;letter-spacing:.5px;text-transform:uppercase}
+.top .nav-link:hover,.top .nav-item:hover>.nav-link,.top.scrolled .nav-link:hover,.top.scrolled .nav-item:hover>.nav-link{background:none;color:#1f8f43}
+.top .nav-item.active>.nav-link,.top.scrolled .nav-item.active>.nav-link{background:none;box-shadow:none;color:#1f8f43;font-weight:600}
+.top .nav-item.active>.nav-link::after{display:block;content:"";position:absolute;left:14px;right:14px;bottom:2px;width:auto;height:2px;margin:0;border-radius:0;background:#1f8f43}
+.top .nav-link:focus-visible{outline-color:rgba(31,143,67,.4)}
+.top .nav-link .chev{opacity:.6}
+.top .dd{padding-top:18px}
+.top-r{margin-left:22px;padding-left:22px;border-left:1px solid #e6e9ee;height:34px;gap:12px}
+.top .ib-top,.top.scrolled .ib-top{color:#5b6270}
+.top .ib-top:hover,.top.scrolled .ib-top:hover,.top .nt.open .nt-btn{background:#f2f4f7;color:#1f2937}
+.top .um-btn .u-ic,.top.scrolled .um-btn .u-ic{width:38px;height:38px;background:#fff;border:1px solid #d5dae1}
+.top .um-btn .u-ic img{filter:brightness(0);opacity:.55}
+.top .um-btn:hover .u-ic,.top .um.open .um-btn .u-ic{background:#f5f7f9;border-color:#c3c9d2}
+.top .nt-c,.burger.has-al::after{box-shadow:0 0 0 2px #fff}
+.top .burger,.top.scrolled .burger{color:#374151;border-color:#d5dae1}
+@media (max-width:1280px){.top,.top.scrolled{padding:0 24px}.top .nav-link{padding:0 10px;font-size:13px;letter-spacing:.3px}.top .nav-item.active>.nav-link::after{left:10px;right:10px}}
+@media (max-width:1180px){.top .wm2{display:block}.top .wm2 b{font-size:19px}.top .wm2 span{font-size:13px}.top .brand img{width:42px;height:42px}}
+@media (max-width:960px){.top,.top.scrolled{height:64px;padding:0 14px}.top .brand{margin-right:auto}.top .brand img{width:40px;height:40px}.top-r{border-left:0;padding-left:0;margin-left:8px}}
+@media (max-width:420px){.top .wm2 span{display:block}.top .wm2 b{font-size:17px}.top .wm2 span{font-size:12px}}
