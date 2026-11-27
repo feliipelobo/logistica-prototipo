@@ -893,3 +893,12 @@ main.has-hero{padding-top:0}
 .tbl td.f-run,.tbl tbody tr:hover td.f-run{background:#dce8f8;color:#1b4f8f}
 .tbl td.f-no,.tbl tbody tr:hover td.f-no{background:#e8ebf0;color:#475467}
 .tbl td.f-bad,.tbl tbody tr:hover td.f-bad{background:#fbdcdc;color:#a32020}
+
+/* ===== Navbar e cabeçalho das tabelas no mesmo azul Oxford mais escuro ===== */
+:root{--ox-dk:#001833}
+.top,.top.scrolled{background:var(--ox-dk)}
+.top .nt-c,.burger.has-al::after{box-shadow:0 0 0 2px var(--ox-dk)}
+.top .nav-item.active>.nav-link::after{display:none}
+.top .nav-item.active>.nav-link,.top.scrolled .nav-item.active>.nav-link{background:rgba(255,255,255,.08);box-shadow:inset 0 0 0 1px rgba(255,255,255,.06)}
+.tbl th{background:var(--ox-dk)}
+.tbl th.sortable:hover{background:#06264a}
