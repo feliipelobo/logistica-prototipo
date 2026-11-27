@@ -939,3 +939,4 @@ main.has-hero{padding-top:0}
 @media (max-width:1180px){.top .wm2{display:block}.top .wm2 b{font-size:19px}.top .wm2 span{font-size:13px}.top .brand img{width:42px;height:42px}}
 @media (max-width:960px){.top,.top.scrolled{height:64px;padding:0 14px}.top .brand{margin-right:auto}.top .brand img{width:40px;height:40px}.top-r{border-left:0;padding-left:0;margin-left:8px}}
 @media (max-width:420px){.top .wm2 span{display:block}.top .wm2 b{font-size:17px}.top .wm2 span{font-size:12px}}
+.hero-cr[hidden]{display:none}

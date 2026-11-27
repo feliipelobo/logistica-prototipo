@@ -468,7 +468,7 @@ function heroHead(cfg, rows) {
   return `<section class="hero" id="hero">
     ${sl.map((s, i) => `<img class="hero-img ${i === i0 ? 'on' : ''}" src="${s.img}" alt="${esc(s.alt)}" style="object-position:${s.pos};animation-delay:-${i * 6}s">`).join('')}
     <span class="hero-bar"></span>
-    <a class="hero-cr" id="heroCr" href="${sl[i0].credit[1]}" target="_blank" rel="noopener">${esc(sl[i0].credit[0])}</a>
+    <a class="hero-cr" id="heroCr" href="${sl[i0].credit ? sl[i0].credit[1] : '#'}" target="_blank" rel="noopener"${sl[i0].credit ? '' : ' hidden'}>${sl[i0].credit ? esc(sl[i0].credit[0]) : ''}</a>
     ${sl.length > 1 ? `<div class="hero-dots">${sl.map((s, i) => `<button type="button" class="${i === i0 ? 'on' : ''}" data-hs="${i}" aria-label="Mostrar foto ${i + 1}"></button>`).join('')}</div>` : ''}
     <div class="hero-in">
       <div class="hero-t">
@@ -491,7 +491,7 @@ function heroStart(sl) {
     heroIdx = (i + sl.length) % sl.length;
     imgs.forEach((im, k) => im.classList.toggle('on', k === heroIdx));
     $$('#hero [data-hs]').forEach((d, k) => d.classList.toggle('on', k === heroIdx));
-    const c = $('#heroCr'); if (c) { c.href = sl[heroIdx].credit[1]; c.textContent = sl[heroIdx].credit[0]; }
+    const c = $('#heroCr'), cr = sl[heroIdx].credit; if (c) { c.hidden = !cr; if (cr) { c.href = cr[1]; c.textContent = cr[0]; } }
   };
   $$('#hero [data-hs]').forEach(d => d.onclick = () => { go(+d.dataset.hs); heroStart(sl); });
   heroTimer = setInterval(() => { if (!document.hidden) go(heroIdx + 1); }, 7000);
@@ -817,12 +817,8 @@ const progCfg = (tipo = 'escala') => ({
   log: (o, n) => `${n ? 'Nova programação' : 'Programação atualizada'}: lote ${o.lote} — ${nome('motoristas', o.motoristaId)}`,
   dayFilter: true,
   hero: { place: 'Porto Itapoá · SC', t1: 'Programar', t2: 'Escala', slides: [
-    { img: 'img/porto-itapoa.jpg', pos: 'center 72%', alt: 'Navio porta-contêineres da Maersk atracado no Porto Itapoá',
-      credit: ['Foto: Stanglavine / Wikimedia Commons · CC BY-SA 4.0', 'https://commons.wikimedia.org/wiki/File:Maersk_Lebu_in_Itapo%C3%A1,_Brazil,_2025.jpg'] },
-    { img: 'img/porto-itapoa-2.jpg', pos: 'center 60%', alt: 'Navio MSC Abidjan atracado junto ao guindaste no Porto Itapoá',
-      credit: ['Foto: caetano051068 / Wikimedia Commons · CC BY-SA 3.0', 'https://commons.wikimedia.org/wiki/File:Porto_de_Itapu%C3%A1_SC_-_panoramio_(2).jpg'] },
-    { img: 'img/porto-itapoa-3.jpg', pos: 'center 72%', alt: 'Guindastes do Porto Itapoá e navio Monte Pascoal da Hamburg Süd',
-      credit: ['Foto: caetano051068 / Wikimedia Commons · CC BY-SA 3.0', 'https://commons.wikimedia.org/wiki/File:Porto_de_Itapu%C3%A1_SC_-_panoramio_(3).jpg'] }
+    { img: 'img/porto-itapoa-noite.jpg', pos: 'center 62%', alt: 'Porto Itapoá ao entardecer, com navios da Maersk e da MSC atracados sob os guindastes iluminados' },
+    { img: 'img/porto-itapoa-dia.jpg', pos: 'center 30%', alt: 'Vista aérea do Porto Itapoá com navios atracados e o pátio de contêineres' }
   ] },
   select: { label: 'Gerar imagem', run: rows => escalaImagem(tipo, rows) },
   detail: progDetail
