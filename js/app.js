@@ -1040,7 +1040,13 @@ const progCfg = (tipo = 'escala') => ({
   dayFilter: true,
   hero: { place: 'Porto Itapoá · SC', t1: 'Programar', t2: 'Escala', slides: [
     { img: 'img/porto-itapoa-noite.jpg', pos: 'center 62%', alt: 'Porto Itapoá ao entardecer, com navios da Maersk e da MSC atracados sob os guindastes iluminados' },
-    { img: 'img/porto-itapoa-dia.jpg', pos: 'center 30%', alt: 'Vista aérea do Porto Itapoá com navios atracados e o pátio de contêineres' }
+    { img: 'img/porto-itapoa-dia.jpg', pos: 'center 30%', alt: 'Vista aérea do Porto Itapoá com navios atracados e o pátio de contêineres' },
+    { img: 'img/porto-itapoa.jpg', pos: 'center 72%', alt: 'Navio porta-contêineres da Maersk atracado no Porto Itapoá',
+      credit: ['Foto: Stanglavine / Wikimedia Commons · CC BY-SA 4.0', 'https://commons.wikimedia.org/wiki/File:Maersk_Lebu_in_Itapo%C3%A1,_Brazil,_2025.jpg'] },
+    { img: 'img/porto-itapoa-2.jpg', pos: 'center 60%', alt: 'Navio MSC Abidjan atracado junto ao guindaste no Porto Itapoá',
+      credit: ['Foto: caetano051068 / Wikimedia Commons · CC BY-SA 3.0', 'https://commons.wikimedia.org/wiki/File:Porto_de_Itapu%C3%A1_SC_-_panoramio_(2).jpg'] },
+    { img: 'img/porto-itapoa-3.jpg', pos: 'center 72%', alt: 'Guindastes do Porto Itapoá e navio Monte Pascoal da Hamburg Süd',
+      credit: ['Foto: caetano051068 / Wikimedia Commons · CC BY-SA 3.0', 'https://commons.wikimedia.org/wiki/File:Porto_de_Itapu%C3%A1_SC_-_panoramio_(3).jpg'] }
   ] },
   select: { label: 'Gerar imagem', run: rows => escalaImagem(tipo, rows) },
   detail: progDetail
