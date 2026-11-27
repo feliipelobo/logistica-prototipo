@@ -1111,3 +1111,15 @@ main.has-band{padding-top:0}
   .mc-meta span:first-child{flex-basis:100%}
   .mc-ch{flex-direction:column;gap:4px}
 }
+
+/* ===== Celular: busca e filtros recolhidos atrás de um botão ===== */
+.tb-tog{display:none}
+@media (max-width:700px){
+  .tb-tog{display:flex;align-items:center;gap:8px;width:100%;padding:13px 16px;border:0;border-bottom:1px solid var(--line-2);background:#fff;color:var(--ink-2);font:600 14px var(--font);cursor:pointer;text-align:left;border-radius:var(--r-lg) var(--r-lg) 0 0}
+  .tb-tog span{flex:1;display:inline-flex;align-items:center;gap:6px}
+  .tb-tog svg:last-child{color:var(--sub);transition:transform .2s}
+  .tb-tog.on svg:last-child{transform:rotate(180deg)}
+  .tb-dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--acc)}
+  .panel .toolbar{display:none}
+  .panel .toolbar.tb-open{display:flex}
+}

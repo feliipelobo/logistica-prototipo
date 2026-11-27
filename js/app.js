@@ -508,7 +508,8 @@ function crud(cfg) {
     ${cfg.note ? noteBox(cfg.note) : ''}
     ${sumBlock(sum)}
     <div class="panel">
-      <div class="toolbar">
+      <button class="tb-tog ${ls.tbOpen || selOn ? 'on' : ''}" id="tbTog" type="button" aria-expanded="${!!(ls.tbOpen || selOn)}">${ic('search', 15)}<span>Buscar e filtrar${ls.q || ls.f || ls.day ? ' <i class="tb-dot"></i>' : ''}</span>${ic('chev', 15)}</button>
+      <div class="toolbar ${ls.tbOpen || selOn ? 'tb-open' : ''}">
         <div class="tb-l"><div class="search">${ic('search')}<input id="q" placeholder="Buscar ${cfg.searchPh || 'registros'}..." value="${esc(ls.q)}" aria-label="Buscar"></div>
           ${cfg.dayFilter ? `<div class="day-f"><label for="day">Dia</label><input type="date" id="day" value="${esc(ls.day)}"><button class="btn btn-sec btn-sm" id="dayHoje" type="button">Hoje</button>${ls.day ? `<button class="ib" id="dayClr" type="button" title="Mostrar todos os dias" aria-label="Limpar dia">${ic('x', 15)}</button>` : ''}</div>` : ''}
           ${cfg.filter ? `<select id="flt" class="sel-sm" aria-label="Filtrar por ${cfg.filter.label}"><option value="">${cfg.filter.label}: todos</option>${fopts.map(o => `<option ${o === ls.f ? 'selected' : ''}>${esc(o)}</option>`).join('')}</select>` : ''}</div>
@@ -585,6 +586,7 @@ function crud(cfg) {
   $$('th[data-s]').forEach(th => th.onclick = () => { const i = +th.dataset.s; if (ls.s === i) ls.d *= -1; else { ls.s = i; ls.d = 1; } crud(cfg); });
   $('#novo').onclick = () => form(cfg, null);
   $('#csv').onclick = () => exportCsv(cfg, cur);
+  $('#tbTog').onclick = () => { ls.tbOpen = !ls.tbOpen; $('#tbTog').classList.toggle('on', ls.tbOpen); $('#tbTog').setAttribute('aria-expanded', ls.tbOpen); document.querySelector('.panel .toolbar').classList.toggle('tb-open', ls.tbOpen); };
 }
 
 /* ---------------- Imagem da escala / serviços (para enviar no grupo) ---------------- */
