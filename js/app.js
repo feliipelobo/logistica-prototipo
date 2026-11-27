@@ -215,7 +215,7 @@ const emptyState = (t, d, icon = 'inbox') => `<div class="empty"><div class="e-i
 function pageHead(group, title, desc, actions = '') {
   return `<div class="ph"><div><nav class="crumb" aria-label="Você está em"><span>Início</span>${group ? `${ic('chevR', 13)}<span>${group}</span>` : ''}${ic('chevR', 13)}<b>${title}</b></nav><h1>${title}</h1>${desc ? `<p>${desc}</p>` : ''}</div><div class="ph-a">${actions}</div></div>`;
 }
-const FEED = { '🔧': ['tool', 'warn'], '🚛': ['truck', 'info'], '🏁': ['check', 'ok'], '📦': ['truck', 'info'], '💸': ['wallet', 'warn'], '💰': ['dollar', 'ok'], '🧾': ['receipt', 'info'], '⛽': ['fuel', 'warn'], '🗓️': ['calendar', 'info'], '✅': ['check', 'ok'], '✏️': ['pencil', 'neu'], '🗑️': ['trash', 'red'] };
+const FEED = { '🔧': ['tool', 'warn'], '🚛': ['truck', 'info'], '🏁': ['check', 'ok'], '📦': ['truck', 'info'], '💸': ['wallet', 'warn'], '💰': ['dollar', 'ok'], '🧾': ['receipt', 'info'], '⛽': ['fuel', 'warn'], '🗓️': ['calendar', 'info'], '✅': ['check', 'ok'], '✏️': ['pencil', 'neu'], '🗑️': ['trash', 'red'], '✍️': ['pencil', 'ok'] };
 const feedIc = i => FEED[i] || ['refresh', 'neu'];
 
 /* ---------------- Toast / modal ---------------- */
@@ -379,7 +379,7 @@ let lidas = (() => { try { return new Set(JSON.parse(store.get(NKEY) || '[]')); 
 const ago = t => { const m = Math.round((Date.now() - t) / 6e4); return m < 1 ? 'agora' : m < 60 ? `há ${m} min` : m < 1440 ? `há ${Math.round(m / 60)} h` : new Date(t).toLocaleDateString('pt-BR'); };
 /* Grupos do painel de notificações (na ordem em que aparecem) */
 const NGRP = [['venc', 'Vencimentos', 'alert'], ['fin', 'Pendências financeiras', 'dollar'], ['prog', 'Programação', 'calendar'], ['pag', 'Pagamentos', 'wallet'], ['rec', 'Recebimentos', 'receipt'], ['abast', 'Abastecimentos', 'fuel'], ['cad', 'Cadastros e alterações', 'pencil']];
-const LOG_GRP = { '🚛': 'prog', '📦': 'prog', '🏁': 'prog', '🗓️': 'prog', '💸': 'pag', '🔧': 'pag', '💰': 'rec', '🧾': 'rec', '⛽': 'abast' };
+const LOG_GRP = { '🚛': 'prog', '📦': 'prog', '🏁': 'prog', '🗓️': 'prog', '💸': 'pag', '🔧': 'pag', '💰': 'rec', '🧾': 'rec', '⛽': 'abast', '✍️': 'pag' };
 const LOG_GO = { prog: '#/escala', rec: '#/rpas', abast: '#/abastecimentos' };
 const ntFechados = new Set();
 function notifs() {
@@ -782,8 +782,7 @@ const loadJsPdf = () => jsPdfLoad || (jsPdfLoad = new Promise((ok, err) => {
   s.onload = () => window.jspdf ? ok(window.jspdf) : err(); s.onerror = () => { jsPdfLoad = null; err(); };
   document.head.appendChild(s);
 }));
-async function reciboMotorista(p) {
-  try { await Promise.all([document.fonts.load('700 20px Inter'), document.fonts.load('600 20px Inter'), document.fonts.load('500 20px Inter')]); } catch (e) {}
+function reciboDados(p) {
   const m = by('motoristas', p.motoristaId) || {}, pgs = S.pagamentos.filter(g => g.progId === p.id);
   const qtd = pgs.length ? sumBy(pgs, g => g.qtd) : p.qtdViagens;
   const vu = pgs.length ? pgs[0].valorViagem : p.valorMotorista;
@@ -791,6 +790,14 @@ async function reciboMotorista(p) {
   const forma = pgs.length ? [...new Set(pgs.map(g => g.forma))].join(', ') : '—';
   const dataPg = pgs.length ? fdate(pgs[pgs.length - 1].data) : new Date().toLocaleDateString('pt-BR');
   const num = `${p.lote}-${String(p.id).replace(/\D/g, '').padStart(3, '0')}`;
+  return { m, qtd, vu, bruto, vale, liq, forma, dataPg, num };
+}
+const dataHora = t => { const d = new Date(t); return `${d.toLocaleDateString('pt-BR')} às ${d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}`; };
+const loadImg = src => new Promise(ok => { const i = new Image(); i.onload = () => ok(i); i.onerror = () => ok(null); i.src = src; });
+async function reciboMotorista(p) {
+  try { await Promise.all([document.fonts.load('700 20px Inter'), document.fonts.load('600 20px Inter'), document.fonts.load('500 20px Inter')]); } catch (e) {}
+  const { m, qtd, vu, bruto, vale, liq, forma, dataPg, num } = reciboDados(p);
+  const ass = p.assin && p.assin.em ? p.assin : null, assImg = ass && ass.img ? await loadImg(ass.img) : null;
 
   const W = 1240, H = 1754, P = 96, sc = 2, cv = document.createElement('canvas');
   cv.width = W * sc; cv.height = H * sc;
@@ -842,9 +849,15 @@ async function reciboMotorista(p) {
   y = Math.max(y + 40, H - 330);
   c.fillStyle = '#344257'; c.font = F(500, 20); c.fillText(`Itapoá (SC), ${dataPg}.`, P, y);
   y += 130;
+  if (assImg) {
+    const bw = 440, bh = 116, k = Math.min(bw / assImg.width, bh / assImg.height), iw = assImg.width * k, ih = assImg.height * k;
+    c.drawImage(assImg, W / 2 - iw / 2, y - ih - 6, iw, ih);
+  }
   c.fillStyle = '#94a3b8'; c.fillRect(W / 2 - 300, y, 600, 1.5);
   c.textAlign = 'center'; c.fillStyle = '#0f1b2d'; c.font = F(700, 21); c.fillText(m.nome || 'Motorista', W / 2, y + 34);
-  c.fillStyle = '#64748b'; c.font = F(500, 17); c.fillText(`CPF ${m.cpf || '—'} · Motorista`, W / 2, y + 60); c.textAlign = 'left';
+  c.fillStyle = '#64748b'; c.font = F(500, 17); c.fillText(`CPF ${m.cpf || '—'} · Motorista`, W / 2, y + 60);
+  if (ass) { c.fillStyle = '#17663a'; c.font = F(600, 15); c.fillText(`Assinado eletronicamente em ${dataHora(ass.em)} · código ${ass.tok}`, W / 2, y + 88); }
+  c.textAlign = 'left';
 
   // rodapé
   c.fillStyle = '#e4e9f0'; c.fillRect(P, H - 90, W - 2 * P, 1);
@@ -866,6 +879,99 @@ async function reciboMotorista(p) {
   }
 }
 
+/* ---------------- Link de assinatura do recibo ---------------- */
+const novoTok = () => Array.from({ length: 10 }, () => 'abcdefghjkmnpqrstuvwxyz23456789'[Math.floor(Math.random() * 31)]).join('');
+const linkAssin = tok => `${location.href.split(/[?#]/)[0]}#/assinar/${tok}`;
+function copiar(txt, inp) {
+  const ok = () => toast('Link copiado.', 'ok', 'check');
+  if (navigator.clipboard && window.isSecureContext) return navigator.clipboard.writeText(txt).then(ok).catch(() => copiar2());
+  copiar2();
+  function copiar2() { if (inp) { inp.select(); try { document.execCommand('copy'); ok(); } catch (e) { toast('Selecione o link e copie manualmente.', 'warn', 'alert'); } } }
+}
+function linkAssinModal(p) {
+  if (!p.assin) { p.assin = { tok: novoTok(), criado: Date.now() }; store.set(KEY, JSON.stringify(S)); }
+  const { m, liq, num } = reciboDados(p), url = linkAssin(p.assin.tok);
+  const tel = String(m.telefone || '').replace(/\D/g, ''), msg = `Olá, ${(m.nome || '').split(' ')[0]}! Segue o link para conferir e assinar o recibo de pagamento do lote ${p.lote} (${brl(liq)}): ${url}`;
+  const wa = `https://wa.me/${tel ? '55' + tel : ''}?text=${encodeURIComponent(msg)}`;
+  openModal({ title: 'Link de assinatura', sub: `Recibo Nº ${esc(num)} · ${esc(m.nome || '—')}`,
+    body: `
+      <div class="sg-info">${ic('info', 16)}<div>Envie este link para o motorista. Ele abre no celular, confere os valores e <b>assina com o dedo</b>. A assinatura entra automaticamente no recibo em PDF.</div></div>
+      <label class="sg-l">Link do recibo</label>
+      <div class="sg-link"><input id="sgUrl" readonly value="${esc(url)}"><button class="btn btn-sec" id="sgCopy">Copiar</button></div>
+      <div class="sg-meta"><span>Motorista</span><b>${esc(m.nome || '—')}</b><span>Valor líquido</span><b>${brl(liq)}</b><span>Situação</span><b>${p.assin.em ? 'Assinado em ' + dataHora(p.assin.em) : 'Aguardando assinatura'}</b></div>`,
+    footer: `<button class="btn btn-sec" id="sgBack">Voltar</button><a class="btn btn-sec" href="${esc(url)}" target="_blank" rel="noopener">${ic('eye', 15)}Abrir página</a><a class="btn btn-pri" href="${esc(wa)}" target="_blank" rel="noopener">${ic('share', 15)}Enviar no WhatsApp</a>` });
+  $('#sgCopy').onclick = () => copiar(url, $('#sgUrl'));
+  $('#sgUrl').onfocus = e => e.target.select();
+  $('#sgBack').onclick = () => { closeModal(); progDetail(p); };
+}
+function signRoute() {
+  const mt = location.hash.match(/^#\/assinar\/([a-z0-9]+)/i), el = $('#sign');
+  if (!mt) {
+    if (el) { el.remove(); document.body.classList.remove('sign-mode'); if (me()) { $('#shell').hidden = false; renderShell(); } }
+    return false;
+  }
+  renderSign(mt[1]); return true;
+}
+function renderSign(tok) {
+  const p = S.progs.find(x => x.assin && x.assin.tok === tok), st = `${tok}:${p ? (p.assin.em ? 'ok' : 'pend') : 'x'}`;
+  let el = $('#sign');
+  if (el && el.dataset.st === st) return;
+  if (!el) { el = document.createElement('div'); el.id = 'sign'; document.body.appendChild(el); }
+  el.dataset.st = st;
+  document.body.classList.add('sign-mode');
+  $('#shell').hidden = true; $('#login').hidden = true;
+  const head = `<div class="sg-head"><img src="img/logo-simbolo.png" alt=""><div class="wm"><b>SERAFINI</b><span>TRANSPORTES</span></div></div>`;
+  if (!p) { el.innerHTML = `<div class="sg-wrap"><div class="sg-card">${head}<div class="sg-body sg-done"><span class="sg-ic bad">${ic('alert', 26)}</span><h1>Link inválido</h1><p>Este link de assinatura não existe ou foi substituído. Peça um novo link à Serafini Transportes.</p></div></div></div>`; return; }
+  const d = reciboDados(p), cli = nome('empresas', p.clienteId);
+  const linhas = [['Lote', p.lote], ['Vaga', p.vaga || '—'], ['Cliente', cli], ['Data da escala', fdate(p.data)], ['Veículo', p.placa || '—'], [`Viagens (${d.qtd} × ${brl(d.vu)})`, brl(d.bruto)], ['Vale descontado', d.vale ? '− ' + brl(d.vale) : brl(0)], ['Forma de pagamento', d.forma]];
+  const resumo = `<div class="sg-val"><span>Valor líquido recebido</span><b>${brl(d.liq)}</b><small>${esc(porExtenso(d.liq))}</small></div>
+    <dl class="sg-dl">${linhas.map(([a, b]) => `<dt>${esc(a)}</dt><dd>${esc(b)}</dd>`).join('')}</dl>`;
+  if (p.assin.em) {
+    el.innerHTML = `<div class="sg-wrap"><div class="sg-card">${head}<div class="sg-body sg-done"><span class="sg-ic">${ic('check', 26)}</span><h1>Recibo assinado</h1><p>Obrigado, ${esc((d.m.nome || '').split(' ')[0])}! Sua assinatura foi registrada em ${dataHora(p.assin.em)}.</p>
+      ${p.assin.img ? `<div class="sg-sig"><img src="${p.assin.img}" alt="Assinatura"><span>${esc(d.m.nome || '')}</span></div>` : ''}
+      ${resumo}<button class="btn btn-sec sg-full" id="sgPdf">${ic('download', 15)}Baixar recibo assinado</button></div>
+      <div class="sg-foot">Recibo Nº ${esc(d.num)} · código ${esc(tok)}</div></div></div>`;
+    $('#sgPdf').onclick = e => { const b = e.currentTarget; b.disabled = true; reciboMotorista(p).finally(() => { b.disabled = false; }); };
+    return;
+  }
+  el.innerHTML = `<div class="sg-wrap"><div class="sg-card">${head}<div class="sg-body">
+      <div class="sg-k">Recibo de pagamento · Nº ${esc(d.num)}</div>
+      <h1>Olá, ${esc((d.m.nome || 'motorista').split(' ')[0])}</h1>
+      <p>Confira os dados do seu pagamento e assine no quadro abaixo.</p>
+      ${resumo}
+      <p class="sg-decl">Declaro que recebi de <b>SERAFINI TRANSPORTES</b> a importância de <b>${brl(d.liq)}</b> (${esc(porExtenso(d.liq))}), referente às viagens realizadas no lote ${esc(p.lote)}, dando plena quitação do valor acima.</p>
+      <div class="sg-pad-h"><label>Sua assinatura</label><button class="lnk" id="sgClr" type="button">Limpar</button></div>
+      <div class="sg-pad"><canvas id="sgCv" aria-label="Quadro para assinar com o dedo ou o mouse"></canvas><span class="sg-ph" id="sgPh">Assine aqui com o dedo</span></div>
+      <div class="sg-who"><b>${esc(d.m.nome || '—')}</b><span>CPF ${esc(d.m.cpf || '—')}</span></div>
+      <label class="sg-ck"><input type="checkbox" id="sgOk"> Confirmo que os dados acima estão corretos e que recebi o valor informado.</label>
+      <button class="btn btn-pri sg-full" id="sgGo" disabled>${ic('check', 16)}Assinar recibo</button>
+    </div><div class="sg-foot">Assinatura eletrônica registrada com data e hora · Serafini Transportes</div></div></div>`;
+  window.scrollTo(0, 0);
+  const cv = $('#sgCv'), ctx = cv.getContext('2d');
+  let drew = false, down = false, last = null;
+  const fit = () => { const r = cv.getBoundingClientRect(), k = window.devicePixelRatio || 1; cv.width = r.width * k; cv.height = r.height * k; ctx.setTransform(k, 0, 0, k, 0, 0); ctx.lineWidth = 2.4; ctx.lineCap = 'round'; ctx.lineJoin = 'round'; ctx.strokeStyle = '#0f1b2d'; drew = false; $('#sgPh').hidden = false; upd(); };
+  const upd = () => { $('#sgGo').disabled = !(drew && $('#sgOk').checked); };
+  const pt = e => { const r = cv.getBoundingClientRect(); return [e.clientX - r.left, e.clientY - r.top]; };
+  cv.onpointerdown = e => { down = true; last = pt(e); try { cv.setPointerCapture(e.pointerId); } catch (er) {} ctx.beginPath(); ctx.arc(last[0], last[1], 1.1, 0, Math.PI * 2); ctx.fillStyle = '#0f1b2d'; ctx.fill(); e.preventDefault(); };
+  cv.onpointermove = e => { if (!down) return; const q = pt(e); ctx.beginPath(); ctx.moveTo(last[0], last[1]); ctx.lineTo(q[0], q[1]); ctx.stroke(); last = q; if (!drew) { drew = true; $('#sgPh').hidden = true; upd(); } e.preventDefault(); };
+  cv.onpointerup = cv.onpointercancel = () => { down = false; };
+  $('#sgClr').onclick = () => { ctx.clearRect(0, 0, cv.width, cv.height); drew = false; $('#sgPh').hidden = false; upd(); };
+  $('#sgOk').onchange = upd;
+  fit();
+  $('#sgGo').onclick = () => {
+    // recorta a área desenhada para guardar só a assinatura
+    const W = cv.width, H = cv.height, px = ctx.getImageData(0, 0, W, H).data;
+    let x0 = W, y0 = H, x1 = 0, y1 = 0;
+    for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) if (px[(y * W + x) * 4 + 3] > 10) { if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; }
+    if (x1 <= x0) return;
+    const pad = 8, o = document.createElement('canvas'); o.width = x1 - x0 + pad * 2; o.height = y1 - y0 + pad * 2;
+    o.getContext('2d').drawImage(cv, x0 - pad, y0 - pad, o.width, o.height, 0, 0, o.width, o.height);
+    p.assin.em = Date.now(); p.assin.img = o.toDataURL('image/png'); p.assin.nome = d.m.nome || '';
+    save(`Recibo assinado: ${d.m.nome || 'motorista'} — lote ${p.lote}`, '✍️');
+    renderSign(tok);
+  };
+}
+
 function progDetail(p) {
   const [pg, pgc] = stPagar(p), [rc, rcc] = stReceber(p);
   const pgm = S.pagamentos.find(g => g.progId === p.id), rec = S.recebimentos.find(g => g.progId === p.id);
@@ -873,7 +979,7 @@ function progDetail(p) {
   const step = (lbl, done, txt) => `<div class="step ${done ? 'done' : ''}"><span class="s-ic">${ic(done ? 'check' : 'clock', 15)}</span><div><span>${lbl}</span><b>${done ? 'Finalizado' : esc(txt)}</b></div></div>`;
   openModal({ size: 'lg', title: `Lote ${p.lote}`, sub: `Escala · Vaga ${esc(p.vaga || '—')} · ${fdate(p.data)} · ${esc(nome('empresas', p.clienteId))}`,
     body: `
-      <div class="dt-badges">${badge(p.status, stProg(p.status))}${badge('A pagar: ' + pg, pgc)}${badge('A receber: ' + rc, rcc)}${p.ocorrencia ? badge('Com ocorrência', 'bad') : ''}</div>
+      <div class="dt-badges">${badge(p.status, stProg(p.status))}${badge('A pagar: ' + pg, pgc)}${badge('A receber: ' + rc, rcc)}${p.ocorrencia ? badge('Com ocorrência', 'bad') : ''}${p.assin && p.assin.em ? badge('Recibo assinado', 'ok') : p.assin ? badge('Recibo aguardando assinatura', 'wait') : ''}</div>
       <div class="dl">
         <div><span>Cliente</span><b>${esc(nome('empresas', p.clienteId))}</b></div><div><span>Motorista</span><b>${esc(nome('motoristas', p.motoristaId))}</b></div>
         <div><span>Placa</span><b>${esc(p.placa)}</b></div><div><span>Vaga</span><b>${esc(p.vaga || "—")}</b></div>
@@ -890,9 +996,11 @@ function progDetail(p) {
     footer: `<button class="btn btn-sec" data-x>Fechar</button>
       ${p.qtdViagens > 0 && pg !== 'Pago' ? `<button class="btn btn-sec" id="dtPag">${ic('wallet', 15)}Lançar pagamento</button>` : ''}
       ${p.qtdViagens > 0 && rc !== 'Recebido' ? `<button class="btn btn-sec" id="dtRec">${ic('receipt', 15)}${rec ? 'Editar recebimento' : 'Lançar recebimento'}</button>` : ''}
-      ${p.status === 'Finalizada' ? `<button class="btn btn-sec" id="dtRecibo">${ic('download', 15)}Baixar recibo</button>` : ''}
+      ${p.status === 'Finalizada' && !(p.assin && p.assin.em) ? `<button class="btn btn-sec" id="dtLink">${ic('share', 15)}${p.assin ? 'Link de assinatura' : 'Gerar link de assinatura'}</button>` : ''}
+      ${p.status === 'Finalizada' ? `<button class="btn btn-sec" id="dtRecibo">${ic('download', 15)}${p.assin && p.assin.em ? 'Baixar recibo assinado' : 'Baixar recibo'}</button>` : ''}
       <button class="btn btn-pri" id="dtEdit">${ic('pencil', 15)}Editar programação</button>` });
   $('#dtEdit').onclick = () => { closeModal(); form(progCfg(), p); };
+  if ($('#dtLink')) $('#dtLink').onclick = () => { closeModal(); linkAssinModal(p); };
   if ($('#dtRecibo')) $('#dtRecibo').onclick = e => { const b = e.currentTarget; b.disabled = true; reciboMotorista(p).finally(() => { b.disabled = false; }); };
   if ($('#dtPag')) $('#dtPag').onclick = () => { closeModal(); form(pagCfg, null, { progId: p.id, qtd: p.qtdViagens, valorViagem: p.valorMotorista }); };
   if ($('#dtRec')) $('#dtRec').onclick = () => { closeModal(); rec ? form(recCfg, rec) : form(recCfg, null, { progId: p.id, valor: Math.max(0, total(p) - recProg(p.id)), status: 'Recebido' }); };
@@ -1345,6 +1453,7 @@ const routes = {
   motoristas: () => crud(cadastros.motoristas), veiculos: () => crud(cadastros.veiculos), empresas: () => crud(cadastros.empresas), terceiros: () => crud(cadastros.terceiros), usuarios: () => crud(cadastros.usuarios)
 };
 function render(fromChange) {
+  if (signRoute()) return;
   if (!me()) return renderLogin();
   if (modalOpen) { pendingRender = true; return; }
   let r = location.hash.replace('#/', '') || 'escala';
@@ -1362,6 +1471,7 @@ function render(fromChange) {
 }
 window.addEventListener('hashchange', () => { closeModal(); render(); });
 function boot() {
+  if (signRoute()) return;
   if (!me()) return renderLogin();
   $('#login').hidden = true; $('#login').innerHTML = '';
   $('#shell').hidden = false;
