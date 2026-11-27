@@ -654,9 +654,8 @@ async function escalaImagem(tipo, rows) {
     cols.forEach(([l, w, f], j) => {
       const last = j === cols.length - 1, forte = l === 'Motorista' || l === 'Início' || l === 'Data';
       if (l === 'Vaga' && r.vaga) {
-        c.font = F(700, 18); const t = String(r.vaga), tw = Math.max(40, c.measureText(t).width + 20);
-        roundRect(c, x + 14, ty + 15, tw, 32, 8); c.fillStyle = '#002147'; c.fill();
-        c.fillStyle = '#ffffff'; c.textAlign = 'center'; c.fillText(t, x + 14 + tw / 2, ty + 38); c.textAlign = 'left';
+        c.font = F(700, 18); c.fillStyle = '#0f1b2d'; c.textAlign = 'left';
+        c.fillText(fit(r.vaga, w - 30), x + 18, ty + 38);
         x += w; return;
       }
       c.font = F(forte ? 600 : 500, 17); c.fillStyle = forte ? '#0f1b2d' : '#344257';
@@ -783,7 +782,7 @@ function progDetail(p) {
 
 /* ---------------- Configuração das telas ---------------- */
 const colData = { label: 'Data', render: r => fdate(r.data), sv: r => r.data };
-const vagaTag = p => p.vaga ? `<span class="vaga" title="Vaga ${esc(p.vaga)}">${esc(p.vaga)}</span>` : '<span style="color:var(--sub)">—</span>';
+const vagaTag = p => p.vaga ? `<b class="vaga-t">${esc(p.vaga)}</b>` : '<span style="color:var(--sub)">—</span>';
 const progCfg = (tipo = 'escala') => ({
   col: 'progs', group: 'Programação', title: 'Programar escala',
   newText: 'Nova escala', editText: 'Editar escala', searchPh: 'por vaga, lote, cliente, motorista ou placa',
@@ -1034,7 +1033,7 @@ function opsHtml(n) {
   return a.map(p => {
     const v = pct(p.qtdViagens, p.qtdPrevista);
     return `<div class="op"><div class="op-h">${person(nome('motoristas', p.motoristaId))}${badge(p.status, stProg(p.status))}</div>
-      <div class="op-s">${p.vaga ? `<span class="vaga sm">${esc(p.vaga)}</span>` : ''}${esc(nome('empresas', p.clienteId))} · Lote ${esc(p.lote)} · ${esc(p.placa)}</div>
+      <div class="op-s">${p.vaga ? `<b class="vaga-t">Vaga ${esc(p.vaga)}</b> · ` : ''}${esc(nome('empresas', p.clienteId))} · Lote ${esc(p.lote)} · ${esc(p.placa)}</div>
       ${meter(v, v >= 100)}<div class="op-f"><span>${p.qtdViagens} de ${p.qtdPrevista} viagens (${v}%)</span><span>${brl(total(p))}</span></div></div>`;
   }).join('');
 }
