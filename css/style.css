@@ -1019,3 +1019,30 @@ main.has-band{padding-top:0}
 .pband{background:#fff}
 .pband::after{display:none}
 .pband{border-bottom:1px solid #dde2e8}
+
+/* ===== Navbar e cabeçalho das tabelas de volta ao azul Oxford (#002147) ===== */
+:root{--ox-dk:#002147}
+.tbl th{background:var(--ox)}
+.tbl th.sortable:hover{background:var(--ox-800)}
+.top,.top.scrolled{background:var(--ox);border-bottom-color:var(--ox)}
+.top.scrolled{box-shadow:0 4px 18px rgba(0,33,71,.25)}
+.top .wm2 b,.top.scrolled .wm2 b,.top .wm2 span,.top.scrolled .wm2 span{color:#fff}
+.top .nav-link,.top.scrolled .nav-link{color:rgba(255,255,255,.74)}
+.top .nav-link:hover,.top .nav-item:hover>.nav-link,.top.scrolled .nav-link:hover,.top.scrolled .nav-item:hover>.nav-link{color:#fff}
+.top .nav-item.active>.nav-link,.top.scrolled .nav-item.active>.nav-link{color:#fff}
+.top .nav-item.active>.nav-link::after{background:#2fae4e}
+.top .nav-link:focus-visible{outline-color:rgba(255,255,255,.4)}
+.top-r{border-left-color:rgba(255,255,255,.16)}
+.top .ib-top,.top.scrolled .ib-top{color:rgba(255,255,255,.85)}
+.top .ib-top:hover,.top.scrolled .ib-top:hover,.top .nt.open .nt-btn{background:rgba(255,255,255,.1);color:#fff}
+.top .um-btn .u-ic,.top.scrolled .um-btn .u-ic{background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.3)}
+.top .um-btn .u-ic img{filter:none;opacity:1}
+.top .um-btn:hover .u-ic,.top .um.open .um-btn .u-ic{background:rgba(255,255,255,.16);border-color:rgba(255,255,255,.4)}
+.top .nt-c,.burger.has-al::after{box-shadow:0 0 0 2px var(--ox)}
+.top .burger,.top.scrolled .burger{color:#fff;border-color:rgba(255,255,255,.25)}
+/* abas da navegação alinhadas à esquerda, logo após a marca */
+.top .brand,.top.scrolled .brand{margin-right:44px}
+.top .nav-l{margin-left:0;flex:1 1 auto}
+.top-r{margin-left:auto}
+@media (max-width:1280px){.top .brand,.top.scrolled .brand{margin-right:24px}}
+@media (max-width:960px){.top .brand,.top.scrolled .brand{margin-right:auto}}
