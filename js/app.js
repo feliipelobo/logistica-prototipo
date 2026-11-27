@@ -86,9 +86,9 @@ function seed() {
   const terceiros = [{ id: 't1', nome: 'Borracharia Dois Irmãos', categoria: 'Borracharia', documento: '18.402.377/0001-56', telefone: '(13) 3361-4420', pix: '18.402.377/0001-56', status: 'Ativo' }];
   const progs = [
     { id: 'p1', tipo: 'escala', data: dia(-1), clienteId: 'e1', lote: '25GX5587HR', vaga: 92, motoristaId: 'm1', placa: 'ANS-4G47',
-      valorViagem: 180, valorMotorista: 70, qtdPrevista: 20, qtdViagens: 20, inicio: '15:45', fim: '22:00', status: 'Finalizada', ocorrencia: false, valorOcorrencia: 0 },
+      valorViagem: 180, valorMotorista: 70, qtdViagens: 20, inicio: '15:45', fim: '22:00', status: 'Finalizada', ocorrencia: false, valorOcorrencia: 0 },
     { id: 'p2', tipo: 'escala', data: dia(0), clienteId: 'e1', lote: '25GX6012HR', vaga: 47, motoristaId: 'm1', placa: 'ANS-4G47',
-      valorViagem: 210, valorMotorista: 85, qtdPrevista: 12, qtdViagens: 5, inicio: '07:30', fim: '', status: 'Em andamento', ocorrencia: false, valorOcorrencia: 0 }
+      valorViagem: 210, valorMotorista: 85, qtdViagens: 5, inicio: '07:30', fim: '', status: 'Em andamento', ocorrencia: false, valorOcorrencia: 0 }
   ];
   const pagamentos = [{ id: 'pg1', progId: 'p1', data: dia(0), qtd: 20, valorViagem: 70, vale: 200, forma: 'PIX' }];
   const pagTerceiros = [{ id: 'pt1', terceiroId: 't1', data: dia(-2), servico: 'Troca de 2 pneus e alinhamento', placa: 'ANS-4G47', valor: 680, forma: 'PIX' }];
@@ -96,7 +96,7 @@ function seed() {
   const abastecimentos = [{ id: 'ab1', data: dia(-1), placa: 'ANS-4G47', litros: 180, valorTotal: 1098, local: 'Posto Ipiranga BR-116' }];
   const now = Date.now();
   const log = [
-    { t: now - 5 * 6e4, icon: '📦', msg: 'Carlos Griss concluiu viagens no lote 25GX6012HR: 5/12' },
+    { t: now - 5 * 6e4, icon: '📦', msg: 'Carlos Griss concluiu viagens no lote 25GX6012HR: 5 até agora' },
     { t: now - 40 * 6e4, icon: '💰', msg: 'Recebimento confirmado: 25GX5587HR — R$ 3.600,00' },
     { t: now - 55 * 6e4, icon: '💸', msg: 'Pagamento lançado: Carlos Griss — R$ 1.200,00' },
     { t: now - 90 * 6e4, icon: '🚛', msg: 'Carlos Griss iniciou a operação — lote 25GX6012HR' },
@@ -620,10 +620,10 @@ async function escalaImagem(tipo, rows) {
   c.textAlign = 'left';
 
   // resumo
-  const mots = new Set(rows.map(r => r.motoristaId)).size, via = sumBy(rows, r => +r.qtdPrevista || 0);
+  const mots = new Set(rows.map(r => r.motoristaId)).size;
   const nomeTipo = tipo === 'escala' ? (rows.length === 1 ? 'escala' : 'escalas') : (rows.length === 1 ? 'serviço' : 'serviços');
   let cx = P; const cy = HEAD + 26;
-  [[rows.length, nomeTipo], [mots, mots === 1 ? 'motorista' : 'motoristas'], [via, 'viagens previstas']].forEach(([n, l]) => {
+  [[rows.length, nomeTipo], [mots, mots === 1 ? 'motorista' : 'motoristas']].forEach(([n, l]) => {
     c.font = F(700, 20); const a = String(n), wa = c.measureText(a).width;
     c.font = F(500, 16); const w = wa + c.measureText(l).width + 46;
     roundRect(c, cx, cy, w, 46, 23); c.fillStyle = '#ffffff'; c.fill(); c.strokeStyle = '#e4e9f0'; c.lineWidth = 1; c.stroke();
@@ -633,7 +633,7 @@ async function escalaImagem(tipo, rows) {
   });
 
   // tabela
-  const cols = [...(multi ? [['Data', 92, r => fdate(r.data).slice(0, 5)]] : []), ['Início', 82, r => r.inicio || '—'], ['Motorista', 0, r => nome('motoristas', r.motoristaId)], ['Placa', 116, r => r.placa], ['Cliente', 150, r => nome('empresas', r.clienteId)], ['Lote', 142, r => r.lote], ['Vaga', 84, r => r.vaga || '—'], ['Viagens', 90, r => r.qtdPrevista]];
+  const cols = [...(multi ? [['Data', 92, r => fdate(r.data).slice(0, 5)]] : []), ['Início', 82, r => r.inicio || '—'], ['Motorista', 0, r => nome('motoristas', r.motoristaId)], ['Placa', 116, r => r.placa], ['Cliente', 150, r => nome('empresas', r.clienteId)], ['Lote', 142, r => r.lote], ['Vaga', 84, r => r.vaga || '—']];
   const fixed = sumBy(cols, x => x[1]); cols.forEach(x => { if (!x[1]) x[1] = W - 2 * P - fixed; });
   let ty = HEAD + SUM;
   const TW = W - 2 * P, TB = TH + rows.length * RH;
@@ -971,7 +971,7 @@ function renderSign(tok) {
 function progDetail(p) {
   const [pg, pgc] = stPagar(p), [rc, rcc] = stReceber(p);
   const pgm = S.pagamentos.find(g => g.progId === p.id), rec = S.recebimentos.find(g => g.progId === p.id);
-  const pc = pct(p.qtdViagens, p.qtdPrevista);
+  const nv = +p.qtdViagens || 0;
   const step = (lbl, done, txt) => `<div class="step ${done ? 'done' : ''}"><span class="s-ic">${ic(done ? 'check' : 'clock', 15)}</span><div><span>${lbl}</span><b>${done ? 'Finalizado' : esc(txt)}</b></div></div>`;
   openModal({ size: 'lg', title: `Lote ${p.lote}`, sub: `Escala · Vaga ${esc(p.vaga || '—')} · ${fdate(p.data)} · ${esc(nome('empresas', p.clienteId))}`,
     body: `
@@ -982,7 +982,7 @@ function progDetail(p) {
         <div><span>Valor da viagem (cliente)</span><b>${brl(p.valorViagem)}</b></div><div><span>Valor da viagem (motorista)</span><b>${brl(p.valorMotorista)}</b></div>
         <div><span>Início</span><b>${p.inicio || '—'}</b></div><div><span>Fim</span><b>${p.fim || '—'}</b></div>
       </div>
-      <div class="dt-prog"><div class="prog-t"><span>Viagens realizadas</span><b>${p.qtdViagens} de ${p.qtdPrevista} (${pc}%)</b></div>${meter(pc, pc >= 100)}</div>
+      <div class="dt-prog"><div class="prog-t"><span>Viagens realizadas</span><b>${nv} ${nv === 1 ? 'viagem' : 'viagens'}</b></div></div>
       <div class="dt-fin">
         <div><span>Total produzido</span><b>${brl(total(p))}</b><small>${p.ocorrencia ? 'Ocorrência: −' + brl(p.valorOcorrencia) : 'Sem ocorrências'}</small></div>
         <div><span>Pagamento ao motorista</span><b>${pgm ? brl(pgTotal(pgm)) : brl(custo(p))}</b><small>${pgm ? `Pago em ${fdate(pgm.data)} · vale ${brl(pgm.vale)}` : 'Ainda não lançado'}</small></div>
@@ -1015,7 +1015,7 @@ const progCfg = (tipo = 'escala') => ({
   cols: [
     colData, { label: 'Vaga', c: 1, sv: p => +p.vaga || 0, render: vagaTag }, { label: 'Cliente', render: p => esc(nome('empresas', p.clienteId)) }, { label: 'Lote', k: 'lote', cls: 'mono' },
     { label: 'Motorista', render: p => person(nome('motoristas', p.motoristaId)) }, { label: 'Placa', k: 'placa', cls: 'mono' },
-    { label: 'Viagens', sv: p => p.qtdViagens, render: p => { const v = pct(p.qtdViagens, p.qtdPrevista); return `<div class="prog"><div class="prog-t"><span>${p.qtdViagens}/${p.qtdPrevista}</span><span>${v}%</span></div>${meter(v, v >= 100)}</div>`; } },
+    { label: 'Viagens', sv: p => p.qtdViagens, render: p => `<b class="via-n">${num(+p.qtdViagens || 0)}</b>` },
     { label: 'Total produzido', r: 1, cls: 'strong', sv: total, render: p => brl(total(p)) },
     { label: 'Status', c: 1, sv: p => p.status, fill: p => [p.status, stProg(p.status)] },
     { label: 'Pagamento', c: 1, sv: p => stPagar(p)[0], fill: stPagar }, { label: 'Recebimento', c: 1, sv: p => stReceber(p)[0], fill: stReceber }
@@ -1027,7 +1027,7 @@ const progCfg = (tipo = 'escala') => ({
     { k: 'motoristaId', label: 'Motorista', type: 'select', req: 1, options: () => S.motoristas.filter(m => m.status !== 'Inativo').map(m => [m.id, `${m.nome} (${m.tipo})`]) },
     { k: 'placa', label: 'Placa', type: 'select', req: 1, options: () => S.veiculos.map(x => [x.placa, `${x.placa} · ${x.modelo}`]) },
     { k: 'valorViagem', label: 'Valor da viagem (cliente)', type: 'number', req: 1 }, { k: 'valorMotorista', label: 'Valor da viagem (motorista)', type: 'number', req: 1 },
-    { k: 'qtdPrevista', label: 'Viagens previstas', type: 'number', req: 1 }, { k: 'qtdViagens', label: 'Viagens realizadas', type: 'number' },
+    { k: 'qtdViagens', label: 'Viagens realizadas', type: 'number' },
     { k: 'inicio', label: 'Início', type: 'time' }, { k: 'fim', label: 'Fim', type: 'time' },
     { k: 'status', label: 'Status', type: 'select', req: 1, options: ['Programada', 'Em andamento', 'Finalizada'] },
     { k: 'valorOcorrencia', label: 'Valor da ocorrência (desconto)', type: 'number' },
@@ -1035,7 +1035,7 @@ const progCfg = (tipo = 'escala') => ({
   ],
   defaults: () => ({ tipo, data: ymd(new Date()), status: 'Programada', qtdViagens: 0, valorOcorrencia: 0 }),
   onChange: (v, n) => n === 'motoristaId' ? { placa: (S.veiculos.find(x => x.proprietario === nome('motoristas', v.motoristaId)) || {}).placa || '' } : {},
-  beforeSave: o => { o.tipo = tipo; if (o.status === 'Finalizada' && !o.qtdViagens) o.qtdViagens = o.qtdPrevista; },
+  beforeSave: o => { o.tipo = tipo; },
   log: (o, n) => `${n ? 'Nova programação' : 'Programação atualizada'}: lote ${o.lote} — ${nome('motoristas', o.motoristaId)}`,
   dayFilter: true,
   hero: { place: 'Porto Itapoá · SC', t1: 'Programar', t2: 'Escala', slides: [
@@ -1255,10 +1255,10 @@ function opsHtml(n) {
   const a = [...S.progs.filter(p => p.status === 'Em andamento'), ...S.progs.filter(p => p.status === 'Programada')].slice(0, n);
   if (!a.length) return emptyState('Nenhuma operação em andamento', '', 'truck');
   return a.map(p => {
-    const v = pct(p.qtdViagens, p.qtdPrevista);
+    const nv = +p.qtdViagens || 0;
     return `<div class="op"><div class="op-h">${person(nome('motoristas', p.motoristaId))}${badge(p.status, stProg(p.status))}</div>
       <div class="op-s">${p.vaga ? `<b class="vaga-t">Vaga ${esc(p.vaga)}</b> · ` : ''}${esc(nome('empresas', p.clienteId))} · Lote ${esc(p.lote)} · ${esc(p.placa)}</div>
-      ${meter(v, v >= 100)}<div class="op-f"><span>${p.qtdViagens} de ${p.qtdPrevista} viagens (${v}%)</span><span>${brl(total(p))}</span></div></div>`;
+      <div class="op-f"><span>${nv} ${nv === 1 ? 'viagem realizada' : 'viagens realizadas'}</span><span>${brl(total(p))}</span></div></div>`;
   }).join('');
 }
 function clientesHtml(P) {
@@ -1489,9 +1489,9 @@ function tick() {
   if (roll < .45 && open.length) {
     const p = pick(open), m = nome('motoristas', p.motoristaId);
     if (p.status === 'Programada') { p.status = 'Em andamento'; p.qtdViagens = rnd(1, 3); return save(`${m} iniciou a operação — lote ${p.lote}`, '🚛'); }
-    p.qtdViagens = Math.min(p.qtdPrevista, p.qtdViagens + rnd(1, 4));
-    if (p.qtdViagens >= p.qtdPrevista) { p.status = 'Finalizada'; p.fim = new Date().toTimeString().slice(0, 5); return save(`Escala finalizada: ${m} — ${p.qtdViagens} viagens (${brl(total(p))})`, '🏁'); }
-    return save(`${m} concluiu viagens no lote ${p.lote}: ${p.qtdViagens}/${p.qtdPrevista}`, '📦');
+    p.qtdViagens = (+p.qtdViagens || 0) + rnd(1, 4);
+    if (p.qtdViagens >= 10 && Math.random() < .35) { p.status = 'Finalizada'; p.fim = new Date().toTimeString().slice(0, 5); return save(`Escala finalizada: ${m} — ${p.qtdViagens} viagens (${brl(total(p))})`, '🏁'); }
+    return save(`${m} concluiu viagens no lote ${p.lote}: ${p.qtdViagens} até agora`, '📦');
   }
   if (roll < .65) {
     const f = S.progs.filter(p => p.status === 'Finalizada' && !S.pagamentos.some(g => g.progId === p.id));
@@ -1509,7 +1509,7 @@ function tick() {
     return save(`Abastecimento registrado: ${v.placa} — ${l} L`, '⛽');
   }
   const m = pick(S.motoristas), c = pick(S.empresas), v = pick(S.veiculos), vv = pick([150, 180, 210, 240]);
-  S.progs.push({ id: uid(), tipo: 'escala', data: ymd(new Date()), clienteId: c.id, lote: `25GX${rnd(1000, 9999)}HR`, vaga: rnd(10, 99), motoristaId: m.id, placa: v.placa, valorViagem: vv, valorMotorista: Math.round(vv * .39), qtdPrevista: rnd(8, 24), qtdViagens: 0, inicio: '06:00', fim: '', status: 'Programada', ocorrencia: false, valorOcorrencia: 0 });
+  S.progs.push({ id: uid(), tipo: 'escala', data: ymd(new Date()), clienteId: c.id, lote: `25GX${rnd(1000, 9999)}HR`, vaga: rnd(10, 99), motoristaId: m.id, placa: v.placa, valorViagem: vv, valorMotorista: Math.round(vv * .39), qtdViagens: 0, inicio: '06:00', fim: '', status: 'Programada', ocorrencia: false, valorOcorrencia: 0 });
   save(`Nova programação: ${m.nome} → ${c.nome}`, '🗓️');
 }
 function toggleLive() {

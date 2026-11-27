@@ -1046,3 +1046,4 @@ main.has-band{padding-top:0}
 .top-r{margin-left:auto}
 @media (max-width:1280px){.top .brand,.top.scrolled .brand{margin-right:24px}}
 @media (max-width:960px){.top .brand,.top.scrolled .brand{margin-right:auto}}
+.via-n{font-weight:600;color:var(--ink);font-variant-numeric:tabular-nums}
