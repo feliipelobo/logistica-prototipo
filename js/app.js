@@ -988,7 +988,7 @@ function progDetail(p) {
         <div><span>Pagamento ao motorista</span><b>${pgm ? brl(pgTotal(pgm)) : brl(custo(p))}</b><small>${pgm ? `Pago em ${fdate(pgm.data)} · vale ${brl(pgm.vale)}` : 'Ainda não lançado'}</small></div>
         <div><span>Recebimento do cliente</span><b>${rec ? brl(rec.valor) : brl(total(p))}</b><small>${rec ? `${rec.status} · ${fdate(rec.data)} · ${esc(rec.forma)}` : 'Ainda não lançado'}</small></div>
       </div>
-      <div class="steps">${step('Escala', p.status === 'Finalizada', p.status)}${step('Valor a receber', rc === 'Recebido', rc)}${step('Valor a pagar', pg === 'Pago', pg)}</div>`,
+      <div class="steps">${step('Escala', p.status === 'Finalizada', p.status)}${step('Valor a pagar', pg === 'Pago', pg)}${step('Valor a receber', rc === 'Recebido', rc)}</div>`,
     footer: `<button class="btn btn-sec" data-x>Fechar</button>
       ${p.qtdViagens > 0 && pg !== 'Pago' ? `<button class="btn btn-sec" id="dtPag">${ic('wallet', 15)}Lançar pagamento</button>` : ''}
       ${p.qtdViagens > 0 && rc !== 'Recebido' ? `<button class="btn btn-sec" id="dtRec">${ic('receipt', 15)}${rec ? 'Editar recebimento' : 'Lançar recebimento'}</button>` : ''}
