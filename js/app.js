@@ -761,7 +761,7 @@ function progDetail(p) {
       <div class="dt-badges">${badge(p.status, stProg(p.status))}${badge('A pagar: ' + pg, pgc)}${badge('A receber: ' + rc, rcc)}${p.ocorrencia ? badge('Com ocorrência', 'bad') : ''}</div>
       <div class="dl">
         <div><span>Cliente</span><b>${esc(nome('empresas', p.clienteId))}</b></div><div><span>Motorista</span><b>${esc(nome('motoristas', p.motoristaId))}</b></div>
-        <div><span>Placa</span><b>${esc(p.placa)}</b></div><div><span>Vaga</span><b>${vagaTag(p)}</b></div>
+        <div><span>Placa</span><b>${esc(p.placa)}</b></div><div><span>Vaga</span><b>${esc(p.vaga || "—")}</b></div>
         <div><span>Valor da viagem (cliente)</span><b>${brl(p.valorViagem)}</b></div><div><span>Valor da viagem (motorista)</span><b>${brl(p.valorMotorista)}</b></div>
         <div><span>Início</span><b>${p.inicio || '—'}</b></div><div><span>Fim</span><b>${p.fim || '—'}</b></div>
       </div>
