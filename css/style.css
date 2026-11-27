@@ -943,3 +943,4 @@ main.has-hero{padding-top:0}
 /* foto do topo mais nítida: zoom suave e sem rasterização em baixa resolução */
 .hero-img{will-change:auto;image-rendering:auto;filter:brightness(.94) saturate(1.05) contrast(1.04)}
 @keyframes heroKB{from{transform:scale(1)}to{transform:scale(1.05) translate3d(-.6%,-.5%,0)}}
+.foot .dev{font-weight:600;color:var(--ink-2)}
