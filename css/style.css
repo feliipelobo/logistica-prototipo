@@ -1018,3 +1018,4 @@ main.has-band{padding-top:0}
 /* faixa do título em branco */
 .pband{background:#fff}
 .pband::after{display:none}
+.pband{border-bottom:1px solid #dde2e8}
