@@ -498,7 +498,7 @@ function heroStart(sl) {
 }
 const noteBox = h =>`<div class="note">${ic('info', 17)}<div>${h}</div></div>`;
 let ls = { key: null, q: '', f: '', day: '', s: -1, d: 1, sel: new Set() };
-const cellTxt = (c, r) => c.render ? stripHtml(String(c.render(r))) : String(r[c.k] ?? '');
+const cellTxt = (c, r) => c.fill ? String(c.fill(r)[0]) : c.render ? stripHtml(String(c.render(r))) : String(r[c.k] ?? '');
 function crud(cfg) {
   if (ls.key !== cfg.title) ls = { key: cfg.title, q: '', f: '', day: '', s: -1, d: 1, sel: new Set(), selMode: false };
   const all = cfg.rows ? cfg.rows() : S[cfg.col];
@@ -521,7 +521,7 @@ function crud(cfg) {
           ${selOn ? `<button class="btn btn-pri btn-sm" id="selRun" disabled>${ic('image', 15)}<span id="selLbl">${cfg.select.label}</span></button>` : ''}</div>
       </div>
       ${selOn ? `<div class="selbar" id="selbar" hidden><span id="selTxt"></span><button class="lnk" id="selClr" type="button">Limpar seleção</button></div>` : ''}
-      <div class="tscroll"><table class="tbl"><thead><tr>${selOn ? `<th class="ck-c"><input type="checkbox" id="ckAll" aria-label="Selecionar todos"></th>` : ''}${cfg.cols.map((c, i) => `<th class="sortable ${c.r ? 'r' : ''}" data-s="${i}" title="Ordenar">${c.label}<span class="sa">${ls.s === i ? (ls.d > 0 ? '↑' : '↓') : ''}</span></th>`).join('')}<th class="act" aria-label="Ações"></th></tr></thead><tbody id="tb"></tbody></table></div>
+      <div class="tscroll"><table class="tbl"><thead><tr>${selOn ? `<th class="ck-c"><input type="checkbox" id="ckAll" aria-label="Selecionar todos"></th>` : ''}${cfg.cols.map((c, i) => `<th class="sortable ${c.r ? 'r' : ''}${c.c ? ' c' : ''}" data-s="${i}" title="Ordenar">${c.label}<span class="sa">${ls.s === i ? (ls.d > 0 ? '↑' : '↓') : ''}</span></th>`).join('')}<th class="act" aria-label="Ações"></th></tr></thead><tbody id="tb"></tbody></table></div>
       <div class="tbl-foot"><span id="cnt2"></span><span>${selOn ? 'Marque as programações e clique em “' + cfg.select.label + '”' : cfg.detail ? 'Clique em uma linha para ver os detalhes' : 'Clique no título da coluna para ordenar'}</span></div>
     </div></div>`;
   let cur = [];
@@ -546,7 +546,7 @@ function crud(cfg) {
       rows = [...rows].sort((a, b) => { const x = v(a), y = v(b); return (typeof x === 'number' && typeof y === 'number' ? x - y : String(x).localeCompare(String(y), 'pt-BR', { numeric: true })) * ls.d; });
     }
     const span = cfg.cols.length + 1 + (selOn ? 1 : 0);
-    $('#tb').innerHTML = rows.length ? rows.map(row => `<tr data-id="${row.id}" class="${cfg.detail ? 'click' : ''}">${selOn ? `<td class="ck-c"><input type="checkbox" data-ck="${row.id}" ${ls.sel.has(row.id) ? 'checked' : ''} aria-label="Selecionar"></td>` : ''}${cfg.cols.map(c => `<td class="${c.r ? 'r ' : ''}${c.cls || ''}">${c.render ? c.render(row) : esc(row[c.k])}</td>`).join('')}
+    $('#tb').innerHTML = rows.length ? rows.map(row => `<tr data-id="${row.id}" class="${cfg.detail ? 'click' : ''}">${selOn ? `<td class="ck-c"><input type="checkbox" data-ck="${row.id}" ${ls.sel.has(row.id) ? 'checked' : ''} aria-label="Selecionar"></td>` : ''}${cfg.cols.map(c => `${(f => `<td class="${c.r ? 'r ' : ''}${c.c ? 'c ' : ''}${c.cls || ''}${f ? ' fill f-' + f[1] : ''}">${f ? esc(f[0]) : c.render ? c.render(row) : esc(row[c.k])}</td>`)(c.fill && c.fill(row))}`).join('')}
       <td class="act"><div>${cfg.quick && cfg.quick.show(row) ? `<button class="ib ok" data-qk="${row.id}" title="${cfg.quick.label}" aria-label="${cfg.quick.label}">${ic(cfg.quick.icon, 15)}</button>` : ''}<button class="ib" data-e="${row.id}" title="Editar" aria-label="Editar">${ic('pencil', 15)}</button><button class="ib danger" data-d="${row.id}" title="Excluir" aria-label="Excluir">${ic('trash', 15)}</button></div></td></tr>`).join('')
       : `<tr><td colspan="${span}">${all.length ? emptyState('Nenhum resultado encontrado', `<div>${ls.day ? 'Não há programações neste dia. ' : ''}Ajuste a busca ou o filtro.</div>`, 'search') : emptyState('Nenhum registro ainda', `<div>Clique em “${cfg.newText}” para começar.</div>`)}</td></tr>`;
     $('#cnt').textContent = `${rows.length} de ${all.length}`;
@@ -791,12 +791,12 @@ const progCfg = (tipo = 'escala') => ({
   summary: rs => [['Programações', num(rs.length), 'calendar', 'Total cadastrado'], ['Em andamento', num(rs.filter(p => p.status === 'Em andamento').length), 'truck', 'Operações ativas agora'], ['Finalizadas', num(rs.filter(p => p.status === 'Finalizada').length), 'check', `${pct(rs.filter(p => p.status === 'Finalizada').length, rs.length)}% do total`], ['Total produzido', brl(sumBy(rs, total)), 'dollar', `${num(sumBy(rs, p => p.qtdViagens))} viagens realizadas`]],
   filter: { label: 'Status', get: p => p.status, options: ['Programada', 'Em andamento', 'Finalizada'] },
   cols: [
-    colData, { label: 'Vaga', sv: p => +p.vaga || 0, render: vagaTag }, { label: 'Cliente', render: p => esc(nome('empresas', p.clienteId)) }, { label: 'Lote', k: 'lote', cls: 'mono' },
+    colData, { label: 'Vaga', c: 1, sv: p => +p.vaga || 0, render: vagaTag }, { label: 'Cliente', render: p => esc(nome('empresas', p.clienteId)) }, { label: 'Lote', k: 'lote', cls: 'mono' },
     { label: 'Motorista', render: p => person(nome('motoristas', p.motoristaId)) }, { label: 'Placa', k: 'placa', cls: 'mono' },
     { label: 'Viagens', sv: p => p.qtdViagens, render: p => { const v = pct(p.qtdViagens, p.qtdPrevista); return `<div class="prog"><div class="prog-t"><span>${p.qtdViagens}/${p.qtdPrevista}</span><span>${v}%</span></div>${meter(v, v >= 100)}</div>`; } },
     { label: 'Total produzido', r: 1, cls: 'strong', sv: total, render: p => brl(total(p)) },
-    { label: 'Status', render: p => badge(p.status, stProg(p.status)) },
-    { label: 'Pagamento', render: p => badge(...stPagar(p)) }, { label: 'Recebimento', render: p => badge(...stReceber(p)) }
+    { label: 'Status', c: 1, sv: p => p.status, fill: p => [p.status, stProg(p.status)] },
+    { label: 'Pagamento', c: 1, sv: p => stPagar(p)[0], fill: stPagar }, { label: 'Recebimento', c: 1, sv: p => stReceber(p)[0], fill: stReceber }
   ],
   fields: [
     { k: 'data', label: 'Data', type: 'date', req: 1 },
@@ -898,7 +898,7 @@ const recCfg = {
   rows: () => [...S.recebimentos].sort((a, b) => b.data.localeCompare(a.data)),
   summary: rs => { const rc = rs.filter(g => g.status === 'Recebido'), ab = rs.filter(g => g.status !== 'Recebido'); return [['Recebido', brl(sumBy(rc, g => g.valor)), 'check', `${rc.length} lançamento(s)`], ['Em aberto', brl(sumBy(ab, g => g.valor)), 'clock', `${ab.length} lançamento(s) pendente(s)`], ['Taxa de recebimento', pct(sumBy(rc, g => g.valor), sumBy(rs, g => g.valor)) + '%', 'pie', 'Recebido sobre o total lançado'], ['Ticket médio', brl(rs.length ? sumBy(rs, g => g.valor) / rs.length : 0), 'trend', 'Por lote']]; },
   filter: { label: 'Status', get: g => g.status, options: ['Recebido', 'Pendente'] },
-  cols: [{ label: 'Recebido em / vencimento', render: g => fdate(g.data), sv: g => g.data }, { label: 'Lote', cls: 'mono', render: g => esc((by('progs', g.progId) || {}).lote) }, { label: 'Cliente', render: g => person(nome('empresas', (by('progs', g.progId) || {}).clienteId)) }, { label: 'Valor', r: 1, cls: 'strong', sv: g => g.valor, render: g => brl(g.valor) }, { label: 'Forma', k: 'forma' }, { label: 'Status', render: g => badge(g.status, g.status === 'Recebido' ? 'ok' : 'wait') }],
+  cols: [{ label: 'Recebido em / vencimento', render: g => fdate(g.data), sv: g => g.data }, { label: 'Lote', cls: 'mono', render: g => esc((by('progs', g.progId) || {}).lote) }, { label: 'Cliente', render: g => person(nome('empresas', (by('progs', g.progId) || {}).clienteId)) }, { label: 'Valor', r: 1, cls: 'strong', sv: g => g.valor, render: g => brl(g.valor) }, { label: 'Forma', k: 'forma' }, { label: 'Status', c: 1, sv: g => g.status, fill: g => [g.status, g.status === 'Recebido' ? 'ok' : 'wait'] }],
   fields: [
     { k: 'progId', label: 'Programação (lote)', type: 'select', req: 1, full: 1, options: () => S.progs.filter(p => p.qtdViagens > 0).map(p => [p.id, progLabel(p)]) },
     { k: 'data', label: 'Data do recebimento (ou vencimento)', type: 'date', req: 1 }, { k: 'valor', label: 'Valor', type: 'number', req: 1 },

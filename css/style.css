@@ -879,3 +879,17 @@ main.has-hero{padding-top:0}
 .top .um-btn:hover .u-ic,.top .um.open .um-btn .u-ic{background:rgba(255,255,255,.18);border-color:rgba(255,255,255,.34)}
 .top .burger,.top.scrolled .burger{color:#fff;border-color:rgba(255,255,255,.2)}
 .top .nt-c,.burger.has-al::after{box-shadow:0 0 0 2px #001d3f}
+
+/* ===== Navbar sólida, mesma cor do cabeçalho das tabelas ===== */
+.top,.top.scrolled{background:var(--ox);box-shadow:0 1px 0 rgba(255,255,255,.06)}
+.top.scrolled{-webkit-backdrop-filter:none;backdrop-filter:none;box-shadow:0 1px 0 rgba(255,255,255,.06),0 6px 18px rgba(0,33,71,.18)}
+.top .nt-c,.burger.has-al::after{box-shadow:0 0 0 2px var(--ox)}
+
+/* ===== Colunas centralizadas e status preenchendo a célula ===== */
+.tbl th.c,.tbl td.c{text-align:center}
+.tbl td.fill{font-size:12px;font-weight:600;letter-spacing:.6px;text-transform:uppercase;white-space:nowrap;border-left:1px solid #fff;padding-left:12px;padding-right:12px}
+.tbl td.f-ok,.tbl tbody tr:hover td.f-ok{background:#d9f0df;color:#17663a}
+.tbl td.f-wait,.tbl tbody tr:hover td.f-wait{background:#fbedc9;color:#8a5a00}
+.tbl td.f-run,.tbl tbody tr:hover td.f-run{background:#dce8f8;color:#1b4f8f}
+.tbl td.f-no,.tbl tbody tr:hover td.f-no{background:#e8ebf0;color:#475467}
+.tbl td.f-bad,.tbl tbody tr:hover td.f-bad{background:#fbdcdc;color:#a32020}
