@@ -1015,3 +1015,6 @@ main.has-band{padding-top:0}
 .pband .ph-a{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
 @media (max-width:960px){.pband{margin:0 -16px 28px}.pband-in{padding:26px 16px 26px}.pband .h-l{font-size:19px;letter-spacing:.24em}.pband .h-b{font-size:23px;letter-spacing:.2em}.pb-ln{width:72px;margin:12px 0 10px}}
 @media (max-width:520px){.pband .h-l{font-size:16px;letter-spacing:.18em}.pband .h-b{font-size:19px;letter-spacing:.14em}.pband .ph-a,.pband .ph-a .btn{width:100%}.pband .ph-a .btn{justify-content:center}}
+/* faixa do título em branco */
+.pband{background:#fff}
+.pband::after{display:none}
