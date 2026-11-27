@@ -902,3 +902,9 @@ main.has-hero{padding-top:0}
 .top .nav-item.active>.nav-link,.top.scrolled .nav-item.active>.nav-link{background:rgba(255,255,255,.08);box-shadow:inset 0 0 0 1px rgba(255,255,255,.06)}
 .tbl th{background:var(--ox-dk)}
 .tbl th.sortable:hover{background:#021a36}
+
+/* ===== Tabelas: títulos e informações centralizados ===== */
+.tbl th,.tbl td,.tbl .r{text-align:center}
+.tbl th.act,.tbl td.act,.tbl .ck-c{text-align:center}
+.tbl td .prog{margin:0 auto}
+.tbl td .person{text-align:left}
