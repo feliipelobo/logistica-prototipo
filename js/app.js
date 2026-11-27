@@ -293,7 +293,7 @@ function renderLogin(err, email) {
     if (!u) return renderLogin('E-mail não encontrado. Verifique o endereço ou fale com o administrador.', f.elements.email.value);
     if (u.status === 'Inativo') return renderLogin('Este usuário está inativo. Fale com o administrador.', f.elements.email.value);
     store.set(SKEY, u.id);
-    if (!location.hash || location.hash === '#/tv') location.hash = '#/dashboard';
+    history.replaceState(null, '', '#/escala');
     boot();
     toast(`Bem-vindo(a), ${u.nome.split(' ')[0]}!`, 'ok', 'check');
     const al = alertas();
@@ -1234,9 +1234,9 @@ const routes = {
 function render(fromChange) {
   if (!me()) return renderLogin();
   if (modalOpen) { pendingRender = true; return; }
-  let r = location.hash.replace('#/', '') || 'dashboard';
+  let r = location.hash.replace('#/', '') || 'escala';
   if (r === 'servico') { history.replaceState(null, '', '#/escala'); r = 'escala'; }
-  const route = routes[r] ? r : 'dashboard';
+  const route = routes[r] ? r : 'escala';
   if (route !== 'tv' && document.body.classList.contains('tv')) tvStop();
   if (!fromChange) ls.key = null;
   $('#app').classList.remove('has-hero');
