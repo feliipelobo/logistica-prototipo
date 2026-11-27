@@ -580,6 +580,9 @@ function crud(cfg) {
 /* ---------------- Imagem da escala / serviços (para enviar no grupo) ---------------- */
 const DIAS_L = ['Domingo', 'Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sábado'];
 const dataLonga = s => { const [y, m, d] = s.split('-').map(Number); return `${DIAS_L[new Date(y, m - 1, d).getDay()]}, ${fdate(s)}`; };
+const diaSem = s => { if (!s) return -1; const [y, m, d] = s.split('-').map(Number); return new Date(y, m - 1, d).getDay(); };
+const fds = s => { const d = diaSem(s); return d === 0 || d === 6; };
+const fdsAviso = s => fds(s) ? `<div class="fds-al">${ic('alert', 16)}<div><b>Atenção: ${DIAS_L[diaSem(s)].toLowerCase()}.</b> Fim de semana tem valor diferenciado — confira se o valor da viagem está com o adicional.</div></div>` : '';
 function roundRect(c, x, y, w, h, r) { c.beginPath(); c.moveTo(x + r, y); c.arcTo(x + w, y, x + w, y + h, r); c.arcTo(x + w, y + h, x, y + h, r); c.arcTo(x, y + h, x, y, r); c.arcTo(x, y, x + w, y, r); c.closePath(); }
 function drawLogo(c, x, y, size) {
   const k = size / 104;
@@ -715,7 +718,7 @@ function form(cfg, item, preset) {
     } else {
       input = `<input name="${f.k}" type="${f.type || 'text'}" value="${esc(val)}" ${f.type === 'number' ? 'step="0.01" min="0" inputmode="decimal"' : ''} ${f.req ? 'required' : ''} ${f.ph ? `placeholder="${esc(f.ph)}"` : ''}>`;
     }
-    return `<label class="fld ${f.full ? 'full' : ''}">${f.label}${f.req ? '<span class="req">*</span>' : ''}${input}</label>`;
+    return `<label class="fld ${f.full ? 'full' : ''}">${f.label}${f.req ? '<span class="req">*</span>' : ''}${input}${f.hint ? `<small class="fld-h" data-h="${f.k}">${f.hint(v) || ''}</small>` : ''}</label>`;
   }).join('');
   openModal({ title: item ? cfg.editText : cfg.newText, sub: item ? 'Altere as informações e salve.' : 'Preencha as informações abaixo. Campos com * são obrigatórios.',
     body: `${cfg.formNote ? noteBox(cfg.formNote) : ''}<form id="f" novalidate><div class="fgrid">${fld}</div></form>`,
@@ -726,7 +729,10 @@ function form(cfg, item, preset) {
     cfg.fields.forEach(f => { const el = fe.elements[f.k]; o[f.k] = f.type === 'checkbox' ? el.checked : f.type === 'number' ? (el.value === '' ? '' : parseFloat(el.value)) : el.value.trim(); });
     return o;
   };
+  const hints = () => cfg.fields.filter(f => f.hint).forEach(f => { const h = fe.querySelector(`[data-h="${f.k}"]`); if (h) h.innerHTML = f.hint(read()) || ''; });
+  fe.addEventListener('input', hints);
   fe.addEventListener('change', e => {
+    hints();
     if (!cfg.onChange) return;
     const upd = cfg.onChange(read(), e.target.name) || {};
     Object.entries(upd).forEach(([k, val]) => { if (fe.elements[k]) fe.elements[k].value = val; });
@@ -973,9 +979,9 @@ function progDetail(p) {
   const pgm = S.pagamentos.find(g => g.progId === p.id), rec = S.recebimentos.find(g => g.progId === p.id);
   const nv = +p.qtdViagens || 0;
   const step = (lbl, done, txt) => `<div class="step ${done ? 'done' : ''}"><span class="s-ic">${ic(done ? 'check' : 'clock', 15)}</span><div><span>${lbl}</span><b>${done ? 'Finalizado' : esc(txt)}</b></div></div>`;
-  openModal({ size: 'lg', title: `Lote ${p.lote}`, sub: `Escala · Vaga ${esc(p.vaga || '—')} · ${fdate(p.data)} · ${esc(nome('empresas', p.clienteId))}`,
+  openModal({ size: 'lg', title: `Lote ${p.lote}`, sub: `Escala · Vaga ${esc(p.vaga || '—')} · ${dataLonga(p.data)} · ${esc(nome('empresas', p.clienteId))}`,
     body: `
-      <div class="dt-badges">${badge(p.status, stProg(p.status))}${badge('A pagar: ' + pg, pgc)}${badge('A receber: ' + rc, rcc)}${p.ocorrencia ? badge('Com ocorrência', 'bad') : ''}${p.assin && p.assin.em ? badge('Recibo assinado', 'ok') : p.assin ? badge('Recibo aguardando assinatura', 'wait') : ''}</div>
+      ${fdsAviso(p.data)}<div class="dt-badges">${badge(p.status, stProg(p.status))}${badge('A pagar: ' + pg, pgc)}${badge('A receber: ' + rc, rcc)}${p.ocorrencia ? badge('Com ocorrência', 'bad') : ''}${p.assin && p.assin.em ? badge('Recibo assinado', 'ok') : p.assin ? badge('Recibo aguardando assinatura', 'wait') : ''}</div>
       <div class="dl">
         <div><span>Cliente</span><b>${esc(nome('empresas', p.clienteId))}</b></div><div><span>Motorista</span><b>${esc(nome('motoristas', p.motoristaId))}</b></div>
         <div><span>Placa</span><b>${esc(p.placa)}</b></div><div><span>Vaga</span><b>${esc(p.vaga || "—")}</b></div>
@@ -1004,6 +1010,7 @@ function progDetail(p) {
 
 /* ---------------- Configuração das telas ---------------- */
 const colData = { label: 'Data', render: r => fdate(r.data), sv: r => r.data };
+const colDataSem = { label: 'Data', sv: r => r.data, render: r => `<span class="dsem-w">${fdate(r.data)} <small class="dsem ${fds(r.data) ? 'fds' : ''}">${fds(r.data) ? ic('alert', 12) : ''}${diaSem(r.data) >= 0 ? DIAS_L[diaSem(r.data)] : ''}</small></span>` };
 const vagaTag = p => p.vaga ? `<b class="vaga-t">${esc(p.vaga)}</b>` : '<span style="color:var(--sub)">—</span>';
 const progCfg = (tipo = 'escala') => ({
   col: 'progs', group: 'Programação', title: 'Programar escala',
@@ -1013,7 +1020,7 @@ const progCfg = (tipo = 'escala') => ({
   summary: rs => [['Programações', num(rs.length), 'calendar', 'Total cadastrado'], ['Em andamento', num(rs.filter(p => p.status === 'Em andamento').length), 'truck', 'Operações ativas agora'], ['Finalizadas', num(rs.filter(p => p.status === 'Finalizada').length), 'check', `${pct(rs.filter(p => p.status === 'Finalizada').length, rs.length)}% do total`], ['Total produzido', brl(sumBy(rs, total)), 'dollar', `${num(sumBy(rs, p => p.qtdViagens))} viagens realizadas`]],
   filter: { label: 'Status', get: p => p.status, options: ['Programada', 'Em andamento', 'Finalizada'] },
   cols: [
-    colData, { label: 'Vaga', c: 1, sv: p => +p.vaga || 0, render: vagaTag }, { label: 'Cliente', render: p => esc(nome('empresas', p.clienteId)) }, { label: 'Lote', k: 'lote', cls: 'mono' },
+    colDataSem, { label: 'Vaga', c: 1, sv: p => +p.vaga || 0, render: vagaTag }, { label: 'Cliente', render: p => esc(nome('empresas', p.clienteId)) }, { label: 'Lote', k: 'lote', cls: 'mono' },
     { label: 'Motorista', render: p => person(nome('motoristas', p.motoristaId)) }, { label: 'Placa', k: 'placa', cls: 'mono' },
     { label: 'Viagens', sv: p => p.qtdViagens, render: p => `<b class="via-n">${num(+p.qtdViagens || 0)}</b>` },
     { label: 'Total produzido', r: 1, cls: 'strong', sv: total, render: p => brl(total(p)) },
@@ -1021,7 +1028,7 @@ const progCfg = (tipo = 'escala') => ({
     { label: 'Pagamento', c: 1, sv: p => stPagar(p)[0], fill: stPagar }, { label: 'Recebimento', c: 1, sv: p => stReceber(p)[0], fill: stReceber }
   ],
   fields: [
-    { k: 'data', label: 'Data', type: 'date', req: 1 },
+    { k: 'data', label: 'Data', type: 'date', req: 1, hint: v => v.data ? (fds(v.data) ? `<span class="fds-h">${ic('alert', 13)}${DIAS_L[diaSem(v.data)]} · fim de semana, valor diferenciado</span>` : DIAS_L[diaSem(v.data)]) : '' },
     { k: 'clienteId', label: 'Cliente', type: 'select', req: 1, options: () => S.empresas.map(e => [e.id, e.nome]) },
     { k: 'lote', label: 'Lote', req: 1, ph: 'Ex.: 25GX5587HR' }, { k: 'vaga', label: 'Vaga', type: 'number' },
     { k: 'motoristaId', label: 'Motorista', type: 'select', req: 1, options: () => S.motoristas.filter(m => m.status !== 'Inativo').map(m => [m.id, `${m.nome} (${m.tipo})`]) },

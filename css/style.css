@@ -1047,3 +1047,13 @@ main.has-band{padding-top:0}
 @media (max-width:1280px){.top .brand,.top.scrolled .brand{margin-right:24px}}
 @media (max-width:960px){.top .brand,.top.scrolled .brand{margin-right:auto}}
 .via-n{font-weight:600;color:var(--ink);font-variant-numeric:tabular-nums}
+
+/* ===== Dia da semana e aviso de fim de semana ===== */
+.dsem-w{display:inline-flex;flex-direction:column;align-items:center;line-height:1.25}
+.dsem{display:inline-flex;align-items:center;gap:4px;font-size:11.5px;color:var(--mut);font-weight:500;margin-top:2px}
+.dsem.fds{color:#b45309;font-weight:600}
+.fds-al{display:flex;gap:10px;align-items:flex-start;padding:12px 14px;border-radius:12px;background:var(--warn-bg);border:1px solid var(--warn-bd);color:#8a5a00;font-size:13.5px;line-height:1.5;margin-bottom:14px}
+.fds-al svg{flex:none;margin-top:2px}
+.fld-h{display:block;font-size:12px;color:var(--mut);margin-top:6px;font-weight:500;min-height:0}
+.fld-h:empty{display:none}
+.fds-h{display:inline-flex;align-items:center;gap:5px;color:#b45309;font-weight:600}
