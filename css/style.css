@@ -940,3 +940,6 @@ main.has-hero{padding-top:0}
 @media (max-width:960px){.top,.top.scrolled{height:64px;padding:0 14px}.top .brand{margin-right:auto}.top .brand img{width:40px;height:40px}.top-r{border-left:0;padding-left:0;margin-left:8px}}
 @media (max-width:420px){.top .wm2 span{display:block}.top .wm2 b{font-size:17px}.top .wm2 span{font-size:12px}}
 .hero-cr[hidden]{display:none}
+/* foto do topo mais nítida: zoom suave e sem rasterização em baixa resolução */
+.hero-img{will-change:auto;image-rendering:auto;filter:brightness(.94) saturate(1.05) contrast(1.04)}
+@keyframes heroKB{from{transform:scale(1)}to{transform:scale(1.05) translate3d(-.6%,-.5%,0)}}
