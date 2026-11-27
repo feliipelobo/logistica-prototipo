@@ -999,3 +999,19 @@ body.sign-mode{background:#eef1f5}
 .sg-sig span{display:block;font-size:13px;color:var(--mut);margin-top:6px}
 .sg-done .sg-val,.sg-done .sg-dl{text-align:left}
 @media (max-width:520px){.sg-wrap{padding:0}.sg-card{border-radius:0;border:0;min-height:100vh}.sg-body{padding:22px 18px}.sg-val b{font-size:26px}}
+
+/* ===== Cabeçalho das páginas em faixa cinza (mesmo modelo do título da Programar escala) ===== */
+main.has-band{padding-top:0}
+.pband{position:relative;margin:0 -32px 36px;background:linear-gradient(180deg,#e4e8ed 0%,#dbe0e6 100%);border-bottom:3px solid var(--green);overflow:hidden}
+.pband::after{content:"";position:absolute;right:-60px;top:-80px;width:420px;height:420px;border-radius:50%;background:radial-gradient(circle,rgba(255,255,255,.55),rgba(255,255,255,0) 65%);pointer-events:none}
+.pband-in{position:relative;z-index:1;display:flex;align-items:flex-end;justify-content:space-between;gap:24px;flex-wrap:wrap;padding:34px 32px 34px}
+.pband .crumb{margin-bottom:18px;color:#5b6573}
+.pband .crumb b{color:#1f2937}
+.pband h1{margin:0;line-height:1.05;color:var(--ox)}
+.pband .h-l{display:block;font-size:24px;font-weight:300;letter-spacing:.32em;text-transform:uppercase;color:#1f2a3a}
+.pband .h-b{display:block;margin-top:6px;font-size:30px;font-weight:800;letter-spacing:.28em;text-transform:uppercase;color:var(--ox)}
+.pb-ln{display:block;width:96px;height:2px;background:var(--ox);margin:16px 0 12px;border-radius:2px}
+.pband p{margin:0;max-width:620px;color:#4b5563;font-size:14.5px;font-weight:500;line-height:1.5;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.pband .ph-a{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+@media (max-width:960px){.pband{margin:0 -16px 28px}.pband-in{padding:26px 16px 26px}.pband .h-l{font-size:19px;letter-spacing:.24em}.pband .h-b{font-size:23px;letter-spacing:.2em}.pb-ln{width:72px;margin:12px 0 10px}}
+@media (max-width:520px){.pband .h-l{font-size:16px;letter-spacing:.18em}.pband .h-b{font-size:19px;letter-spacing:.14em}.pband .ph-a,.pband .ph-a .btn{width:100%}.pband .ph-a .btn{justify-content:center}}

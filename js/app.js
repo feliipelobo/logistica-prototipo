@@ -213,7 +213,9 @@ const meter = (v, done) => `<div class="meter ${done ? 'done' : ''}"><i style="w
 const statCard = ([label, value, icon, foot, extra = '', cls = '']) => `<div class="stat ${cls}"><div class="st-h"><span>${label}</span>${icon ? `<i class="st-ic">${ic(icon, 17)}</i>` : ''}</div><b>${value}</b>${foot ? `<div class="st-f">${foot}</div>` : ''}${extra}</div>`;
 const emptyState = (t, d, icon = 'inbox') => `<div class="empty"><div class="e-ic">${ic(icon, 22)}</div><b>${t}</b>${d || ''}</div>`;
 function pageHead(group, title, desc, actions = '') {
-  return `<div class="ph"><div><nav class="crumb" aria-label="Você está em"><span>Início</span>${group ? `${ic('chevR', 13)}<span>${group}</span>` : ''}${ic('chevR', 13)}<b>${title}</b></nav><h1>${title}</h1>${desc ? `<p>${desc}</p>` : ''}</div><div class="ph-a">${actions}</div></div>`;
+  const w = title.split(' '), t1 = w.slice(0, -1).join(' '), t2 = w[w.length - 1];
+  return `<div class="pband"><div class="pband-in"><div class="pb-x"><nav class="crumb" aria-label="Você está em"><span>Início</span>${group ? `${ic('chevR', 13)}<span>${group}</span>` : ''}${ic('chevR', 13)}<b>${title}</b></nav>
+    <h1 aria-label="${title}">${t1 ? `<span class="h-l">${t1}</span>` : ''}<span class="h-b">${t2}</span></h1><span class="pb-ln"></span>${desc ? `<p>${desc}</p>` : ''}</div><div class="ph-a">${actions}</div></div></div>`;
 }
 const FEED = { '🔧': ['tool', 'warn'], '🚛': ['truck', 'info'], '🏁': ['check', 'ok'], '📦': ['truck', 'info'], '💸': ['wallet', 'warn'], '💰': ['dollar', 'ok'], '🧾': ['receipt', 'info'], '⛽': ['fuel', 'warn'], '🗓️': ['calendar', 'info'], '✅': ['check', 'ok'], '✏️': ['pencil', 'neu'], '🗑️': ['trash', 'red'], '✍️': ['pencil', 'ok'] };
 const feedIc = i => FEED[i] || ['refresh', 'neu'];
@@ -1466,6 +1468,7 @@ function render(fromChange) {
   renderNav(route);
   const a = document.activeElement, caret = a && a.id === 'q' ? a.selectionStart : null;
   routes[route]();
+  $('#app').classList.toggle('has-band', !!document.querySelector('#app > .pband, #app > .pg > .pband'));
   if (caret !== null && $('#q')) { $('#q').focus(); try { $('#q').setSelectionRange(caret, caret); } catch (e) {} }
   if (!fromChange) window.scrollTo(0, 0);
 }
