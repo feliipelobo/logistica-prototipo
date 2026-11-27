@@ -750,6 +750,122 @@ function form(cfg, item, preset) {
 }
 
 /* ---------------- Ficha da programação ---------------- */
+/* ---------------- Recibo de pagamento ao motorista (PDF) ---------------- */
+function porExtenso(v) {
+  const U = ['', 'um', 'dois', 'três', 'quatro', 'cinco', 'seis', 'sete', 'oito', 'nove', 'dez', 'onze', 'doze', 'treze', 'quatorze', 'quinze', 'dezesseis', 'dezessete', 'dezoito', 'dezenove'];
+  const D = ['', '', 'vinte', 'trinta', 'quarenta', 'cinquenta', 'sessenta', 'setenta', 'oitenta', 'noventa'];
+  const C = ['', 'cento', 'duzentos', 'trezentos', 'quatrocentos', 'quinhentos', 'seiscentos', 'setecentos', 'oitocentos', 'novecentos'];
+  const ate999 = n => {
+    if (n === 100) return 'cem';
+    const c = Math.floor(n / 100), r = n % 100, p = [];
+    if (c) p.push(C[c]);
+    if (r < 20) { if (r) p.push(U[r]); } else { p.push(D[Math.floor(r / 10)] + (r % 10 ? ' e ' + U[r % 10] : '')); }
+    return p.join(' e ');
+  };
+  const inteiro = n => {
+    if (!n) return 'zero';
+    const mi = Math.floor(n / 1e6), mil = Math.floor(n % 1e6 / 1000), r = n % 1000, p = [];
+    if (mi) p.push(mi === 1 ? 'um milhão' : ate999(mi) + ' milhões');
+    if (mil) p.push(mil === 1 ? 'mil' : ate999(mil) + ' mil');
+    if (r) p.push(ate999(r));
+    return p.length > 1 && r && (r < 100 || r % 100 === 0) ? p.slice(0, -1).join(' ') + ' e ' + p[p.length - 1] : p.join(' ');
+  };
+  const cents = Math.round(Math.abs(v) * 100), re = Math.floor(cents / 100), ce = cents % 100;
+  const a = re ? `${inteiro(re)}${re % 1e6 === 0 ? ' de' : ''} ${re === 1 ? 'real' : 'reais'}` : '', b = ce ? `${ate999(ce)} ${ce === 1 ? 'centavo' : 'centavos'}` : '';
+  return a && b ? `${a} e ${b}` : (a || b || 'zero real');
+}
+let jsPdfLoad = null;
+const loadJsPdf = () => jsPdfLoad || (jsPdfLoad = new Promise((ok, err) => {
+  if (window.jspdf) return ok(window.jspdf);
+  const s = document.createElement('script');
+  s.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
+  s.onload = () => window.jspdf ? ok(window.jspdf) : err(); s.onerror = () => { jsPdfLoad = null; err(); };
+  document.head.appendChild(s);
+}));
+async function reciboMotorista(p) {
+  try { await Promise.all([document.fonts.load('700 20px Inter'), document.fonts.load('600 20px Inter'), document.fonts.load('500 20px Inter')]); } catch (e) {}
+  const m = by('motoristas', p.motoristaId) || {}, pgs = S.pagamentos.filter(g => g.progId === p.id);
+  const qtd = pgs.length ? sumBy(pgs, g => g.qtd) : p.qtdViagens;
+  const vu = pgs.length ? pgs[0].valorViagem : p.valorMotorista;
+  const bruto = pgs.length ? sumBy(pgs, pgBruto) : custo(p), vale = sumBy(pgs, g => g.vale || 0), liq = bruto - vale;
+  const forma = pgs.length ? [...new Set(pgs.map(g => g.forma))].join(', ') : '—';
+  const dataPg = pgs.length ? fdate(pgs[pgs.length - 1].data) : new Date().toLocaleDateString('pt-BR');
+  const num = `${p.lote}-${String(p.id).replace(/\D/g, '').padStart(3, '0')}`;
+
+  const W = 1240, H = 1754, P = 96, sc = 2, cv = document.createElement('canvas');
+  cv.width = W * sc; cv.height = H * sc;
+  const c = cv.getContext('2d'); c.scale(sc, sc);
+  const F = (w, s) => `${w} ${s}px Inter, Arial, sans-serif`;
+  const spaced = (t, x, y, sp) => { for (const ch of t) { c.fillText(ch, x, y); x += c.measureText(ch).width + sp; } };
+  const wrap = (t, x, y, max, lh) => { let ln = ''; for (const w of t.split(' ')) { const tt = ln ? ln + ' ' + w : w; if (c.measureText(tt).width > max && ln) { c.fillText(ln, x, y); y += lh; ln = w; } else ln = tt; } if (ln) c.fillText(ln, x, y); return y + lh; };
+
+  c.fillStyle = '#fff'; c.fillRect(0, 0, W, H);
+  // cabeçalho
+  c.fillStyle = '#002147'; c.fillRect(0, 0, W, 190); c.fillStyle = '#2fae4e'; c.fillRect(0, 186, W, 4);
+  drawLogo(c, P, 50, 92);
+  c.fillStyle = '#fff'; c.font = F(700, 34); spaced('SERAFINI', P + 112, 104, 5);
+  c.fillStyle = '#8fd6a0'; c.font = F(600, 14); spaced('TRANSPORTES', P + 113, 132, 8);
+  c.textAlign = 'right';
+  c.fillStyle = '#9fb6e6'; c.font = F(600, 16); c.fillText('RECIBO DE PAGAMENTO', W - P, 92);
+  c.fillStyle = '#fff'; c.font = F(700, 26); c.fillText(`Nº ${num}`, W - P, 128);
+  c.textAlign = 'left';
+
+  // valor em destaque
+  let y = 270;
+  c.fillStyle = '#0f1b2d'; c.font = F(700, 40); c.fillText('Recibo', P, y);
+  roundRect(c, W - P - 360, y - 50, 360, 74, 14); c.fillStyle = '#ecf8ef'; c.fill(); c.strokeStyle = '#bfe5c9'; c.lineWidth = 1.5; c.stroke();
+  c.textAlign = 'right'; c.fillStyle = '#17663a'; c.font = F(700, 34); c.fillText(brl(liq), W - P - 24, y - 2); c.textAlign = 'left';
+
+  // texto do recibo
+  y = 372; c.fillStyle = '#344257'; c.font = F(500, 22);
+  y = wrap(`Recebi de SERAFINI TRANSPORTES a importância de ${brl(liq)} (${porExtenso(liq)}), referente a ${qtd} ${qtd === 1 ? 'viagem realizada' : 'viagens realizadas'} na escala do lote ${p.lote}, vaga ${p.vaga || '—'}, para o cliente ${nome('empresas', p.clienteId)}, no dia ${fdate(p.data)}, com o veículo de placa ${p.placa || '—'}.`, P, y, W - 2 * P, 36);
+  y = wrap('Pelo que firmo o presente recibo, dando plena e geral quitação do valor acima.', P, y + 6, W - 2 * P, 36);
+
+  // quadro de dados
+  y += 30;
+  const box = (title, rows) => {
+    c.fillStyle = '#64748b'; c.font = F(600, 15); spaced(title.toUpperCase(), P, y, 1.6); y += 18;
+    const h = rows.length * 54;
+    roundRect(c, P, y, W - 2 * P, h, 12); c.fillStyle = '#f8fafc'; c.fill(); c.strokeStyle = '#e4e9f0'; c.lineWidth = 1; c.stroke();
+    rows.forEach(([l, v, strong], i) => {
+      const ry = y + i * 54;
+      if (i) { c.fillStyle = '#e8edf3'; c.fillRect(P + 1, ry, W - 2 * P - 2, 1); }
+      c.fillStyle = '#64748b'; c.font = F(500, 19); c.fillText(l, P + 24, ry + 35);
+      c.textAlign = 'right'; c.fillStyle = strong ? '#0f1b2d' : '#344257'; c.font = F(strong ? 700 : 600, strong ? 22 : 19); c.fillText(v, W - P - 24, ry + 35); c.textAlign = 'left';
+    });
+    y += h + 40;
+  };
+  box('Dados do motorista', [['Nome', m.nome || '—'], ['CPF', m.cpf || '—'], ['Veículo', `${p.placa || '—'}${veic(p.placa).modelo ? ' · ' + veic(p.placa).modelo : ''}`]]);
+  box('Discriminação', [[`Viagens realizadas (${qtd} × ${brl(vu)})`, brl(bruto)], ['Vale / adiantamento descontado', vale ? '− ' + brl(vale) : brl(0)], ['Valor líquido pago', brl(liq), true], ['Forma de pagamento', forma], ['Data do pagamento', dataPg]]);
+
+  // assinatura
+  y = Math.max(y + 40, H - 330);
+  c.fillStyle = '#344257'; c.font = F(500, 20); c.fillText(`Itapoá (SC), ${dataPg}.`, P, y);
+  y += 130;
+  c.fillStyle = '#94a3b8'; c.fillRect(W / 2 - 300, y, 600, 1.5);
+  c.textAlign = 'center'; c.fillStyle = '#0f1b2d'; c.font = F(700, 21); c.fillText(m.nome || 'Motorista', W / 2, y + 34);
+  c.fillStyle = '#64748b'; c.font = F(500, 17); c.fillText(`CPF ${m.cpf || '—'} · Motorista`, W / 2, y + 60); c.textAlign = 'left';
+
+  // rodapé
+  c.fillStyle = '#e4e9f0'; c.fillRect(P, H - 90, W - 2 * P, 1);
+  const now = new Date();
+  c.fillStyle = '#94a3b8'; c.font = F(500, 15); c.fillText(`Gerado em ${now.toLocaleDateString('pt-BR')} às ${now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}`, P, H - 52);
+  c.textAlign = 'right'; c.fillStyle = '#002147'; c.font = F(600, 15); c.fillText('Serafini Transportes · Sistema de Gestão', W - P, H - 52); c.textAlign = 'left';
+
+  const arq = `recibo-${p.lote}-${(m.nome || 'motorista').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]+/g, '-')}`;
+  try {
+    const { jsPDF } = await loadJsPdf();
+    const pdf = new jsPDF({ unit: 'mm', format: 'a4', compress: true });
+    pdf.addImage(cv.toDataURL('image/jpeg', 0.92), 'JPEG', 0, 0, 210, 297);
+    pdf.setProperties({ title: `Recibo ${num}`, author: 'Serafini Transportes' });
+    pdf.save(arq + '.pdf');
+    toast('Recibo baixado em PDF.', 'ok', 'download');
+  } catch (e) {
+    const a = document.createElement('a'); a.href = cv.toDataURL('image/png'); a.download = arq + '.png'; document.body.appendChild(a); a.click(); a.remove();
+    toast('Sem conexão para gerar o PDF — o recibo foi baixado como imagem.', 'warn', 'download');
+  }
+}
+
 function progDetail(p) {
   const [pg, pgc] = stPagar(p), [rc, rcc] = stReceber(p);
   const pgm = S.pagamentos.find(g => g.progId === p.id), rec = S.recebimentos.find(g => g.progId === p.id);
@@ -774,8 +890,10 @@ function progDetail(p) {
     footer: `<button class="btn btn-sec" data-x>Fechar</button>
       ${p.qtdViagens > 0 && pg !== 'Pago' ? `<button class="btn btn-sec" id="dtPag">${ic('wallet', 15)}Lançar pagamento</button>` : ''}
       ${p.qtdViagens > 0 && rc !== 'Recebido' ? `<button class="btn btn-sec" id="dtRec">${ic('receipt', 15)}${rec ? 'Editar recebimento' : 'Lançar recebimento'}</button>` : ''}
+      ${p.status === 'Finalizada' ? `<button class="btn btn-sec" id="dtRecibo">${ic('download', 15)}Baixar recibo</button>` : ''}
       <button class="btn btn-pri" id="dtEdit">${ic('pencil', 15)}Editar programação</button>` });
   $('#dtEdit').onclick = () => { closeModal(); form(progCfg(), p); };
+  if ($('#dtRecibo')) $('#dtRecibo').onclick = e => { const b = e.currentTarget; b.disabled = true; reciboMotorista(p).finally(() => { b.disabled = false; }); };
   if ($('#dtPag')) $('#dtPag').onclick = () => { closeModal(); form(pagCfg, null, { progId: p.id, qtd: p.qtdViagens, valorViagem: p.valorMotorista }); };
   if ($('#dtRec')) $('#dtRec').onclick = () => { closeModal(); rec ? form(recCfg, rec) : form(recCfg, null, { progId: p.id, valor: Math.max(0, total(p) - recProg(p.id)), status: 'Recebido' }); };
 }
