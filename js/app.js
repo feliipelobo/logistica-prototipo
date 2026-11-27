@@ -517,7 +517,7 @@ function crud(cfg) {
           ${selOn ? `<button class="btn btn-pri btn-sm" id="selRun" disabled>${ic('image', 15)}<span id="selLbl">${cfg.select.label}</span></button>` : ''}</div>
       </div>
       ${selOn ? `<div class="selbar" id="selbar" hidden><span id="selTxt"></span><button class="lnk" id="selClr" type="button">Limpar seleção</button></div>` : ''}
-      <div class="tscroll"><table class="tbl"><thead><tr>${selOn ? `<th class="ck-c"><input type="checkbox" id="ckAll" aria-label="Selecionar todos"></th>` : ''}${cfg.cols.map((c, i) => `<th class="sortable ${c.r ? 'r' : ''}${c.c ? ' c' : ''}" data-s="${i}" title="Ordenar">${c.label}<span class="sa">${ls.s === i ? (ls.d > 0 ? '↑' : '↓') : ''}</span></th>`).join('')}<th class="act" aria-label="Ações"></th></tr></thead><tbody id="tb"></tbody></table></div>
+      ${cfg.card ? '<div class="mcards" id="mc"></div>' : ''}<div class="tscroll"><table class="tbl"><thead><tr>${selOn ? `<th class="ck-c"><input type="checkbox" id="ckAll" aria-label="Selecionar todos"></th>` : ''}${cfg.cols.map((c, i) => `<th class="sortable ${c.r ? 'r' : ''}${c.c ? ' c' : ''}" data-s="${i}" title="Ordenar">${c.label}<span class="sa">${ls.s === i ? (ls.d > 0 ? '↑' : '↓') : ''}</span></th>`).join('')}<th class="act" aria-label="Ações"></th></tr></thead><tbody id="tb"></tbody></table></div>
       <div class="tbl-foot"><span id="cnt2"></span><span>${selOn ? 'Marque as programações e clique em “' + cfg.select.label + '”' : cfg.detail ? 'Clique em uma linha para ver os detalhes' : 'Clique no título da coluna para ordenar'}</span></div>
     </div></div>`;
   let cur = [];
@@ -532,6 +532,7 @@ function crud(cfg) {
     all2.checked = cur.length > 0 && vis === cur.length;
     all2.indeterminate = vis > 0 && vis < cur.length;
     $$('#tb tr[data-id]').forEach(tr => tr.classList.toggle('sel', ls.sel.has(tr.dataset.id)));
+    $$('#mc [data-id]').forEach(c => c.classList.toggle('sel', ls.sel.has(c.dataset.id)));
   };
   const view = () => {
     let rows = all.filter(r => !cfg.filter || !ls.f || cfg.filter.get(r) === ls.f);
@@ -553,6 +554,15 @@ function crud(cfg) {
     $$('#tb .ck-c').forEach(td => td.onclick = e => e.stopPropagation());
     $$('#tb [data-ck]').forEach(ck => ck.onchange = () => { ck.checked ? ls.sel.add(ck.dataset.ck) : ls.sel.delete(ck.dataset.ck); syncSel(); });
     if (cfg.detail) $$('#tb tr.click').forEach(tr => tr.onclick = () => cfg.detail(by(cfg.col, tr.dataset.id)));
+    if (cfg.card) {
+      $('#mc').innerHTML = rows.length ? rows.map(r => cfg.card(r, selOn)).join('')
+        : (all.length ? emptyState('Nenhum resultado encontrado', `<div>${ls.day ? 'Não há programações neste dia. ' : ''}Ajuste a busca ou o filtro.</div>`, 'search') : emptyState('Nenhum registro ainda', `<div>Toque em “${cfg.newText}” para começar.</div>`));
+      $$('#mc [data-id]').forEach(el => el.onclick = () => {
+        const id = el.dataset.id;
+        if (selOn) { ls.sel.has(id) ? ls.sel.delete(id) : ls.sel.add(id); const ck = $(`#tb [data-ck="${id}"]`); if (ck) ck.checked = ls.sel.has(id); return syncSel(); }
+        if (cfg.detail) cfg.detail(by(cfg.col, id));
+      });
+    }
     cur = rows;
     syncSel();
   };
@@ -1012,6 +1022,26 @@ function progDetail(p) {
 const colData = { label: 'Data', render: r => fdate(r.data), sv: r => r.data };
 const colDataSem = { label: 'Data', sv: r => r.data, render: r => `<span class="dsem-w">${fdate(r.data)} <small class="dsem ${fds(r.data) ? 'fds' : ''}">${fds(r.data) ? ic('alert', 12) : ''}${diaSem(r.data) >= 0 ? DIAS_L[diaSem(r.data)] : ''}</small></span>` };
 const vagaTag = p => p.vaga ? `<b class="vaga-t">${esc(p.vaga)}</b>` : '<span style="color:var(--sub)">—</span>';
+const DIAS_C = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
+function progCard(p, selOn) {
+  const [pg, pgc] = stPagar(p), [rc, rcc] = stReceber(p), d = diaSem(p.data), we = fds(p.data), nv = +p.qtdViagens || 0;
+  return `<article class="mc ${ls.sel.has(p.id) ? 'sel' : ''}" data-id="${p.id}" role="button" tabindex="0" aria-label="Vaga ${esc(p.vaga || '—')}, lote ${esc(p.lote)}">
+    <div class="mc-vaga"><span>Vaga</span><b>${esc(p.vaga || '—')}</b>${selOn ? `<i class="mc-ck">${ic('check', 13)}</i>` : ''}</div>
+    <div class="mc-b">
+      <div class="mc-top"><b class="mc-cli">${esc(nome('empresas', p.clienteId))}</b><span class="mc-st f-${stProg(p.status)}">${esc(p.status)}</span></div>
+      <div class="mc-lote">Lote <b>${esc(p.lote)}</b></div>
+      <div class="mc-meta">
+        <span class="${we ? 'mc-we' : ''}">${ic(we ? 'alert' : 'calendar', 13)}${d >= 0 ? DIAS_C[d] + ', ' : ''}${fdate(p.data).slice(0, 5)}${p.inicio ? ' · ' + esc(p.inicio) : ''}</span>
+        <span>${ic('user', 13)}${esc(nome('motoristas', p.motoristaId).split(' ').slice(0, 2).join(' '))}</span>
+        <span>${ic('truck', 13)}${esc(p.placa || '—')}</span>
+      </div>
+      <div class="mc-f">
+        <div class="mc-ch"><span class="f-${pgc}">A pagar · ${esc(pg)}</span><span class="f-${rcc}">A receber · ${esc(rc)}</span></div>
+        <div class="mc-v"><b>${brl(total(p))}</b><small>${nv} ${nv === 1 ? 'viagem' : 'viagens'}</small></div>
+      </div>
+    </div>
+  </article>`;
+}
 const progCfg = (tipo = 'escala') => ({
   col: 'progs', group: 'Programação', title: 'Programar escala',
   newText: 'Nova escala', editText: 'Editar escala', searchPh: 'por vaga, lote, cliente, motorista ou placa',
@@ -1056,7 +1086,8 @@ const progCfg = (tipo = 'escala') => ({
       credit: ['Foto: caetano051068 / Wikimedia Commons · CC BY-SA 3.0', 'https://commons.wikimedia.org/wiki/File:Porto_de_Itapu%C3%A1_SC_-_panoramio_(3).jpg'] }
   ] },
   select: { label: 'Gerar imagem', run: rows => escalaImagem(tipo, rows) },
-  detail: progDetail
+  detail: progDetail,
+  card: progCard
 });
 const pagCfg = (() => {
   const ok = id => !!by('progs', id);
