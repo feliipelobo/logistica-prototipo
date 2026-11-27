@@ -857,3 +857,25 @@ main.has-hero{padding-top:0}
 .nt-grp.off .nt-gb{display:none}
 .nt-gb .nt-i{padding:9px 10px}
 .vaga-t{font-weight:700;font-size:15px;color:var(--ink);font-variant-numeric:tabular-nums}.op-s .vaga-t{font-size:inherit}
+
+/* =========================================================
+   Navbar azul-marinho escuro (visual mais corporativo)
+   ========================================================= */
+.top,.top.scrolled{background:linear-gradient(180deg,#00234b 0%,#001a39 100%);box-shadow:0 1px 0 rgba(255,255,255,.05),0 6px 20px rgba(0,18,42,.22)}
+.top.scrolled{background:rgba(0,26,57,.86);-webkit-backdrop-filter:blur(16px) saturate(160%);backdrop-filter:blur(16px) saturate(160%)}
+@supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){.top.scrolled{background:#001a39}}
+.top .wm b,.top.scrolled .wm b{color:#fff}
+.top .wm span,.top.scrolled .wm span{color:#5fcf7d}
+.top .brand,.top.scrolled .brand{border-right-color:rgba(255,255,255,.12)}
+.top .vsep,.top.scrolled .vsep{background:rgba(255,255,255,.12)}
+.top .nav-link,.top.scrolled .nav-link{color:rgba(255,255,255,.7);font-weight:500}
+.top .nav-link:hover,.top .nav-item:hover>.nav-link,.top.scrolled .nav-link:hover,.top.scrolled .nav-item:hover>.nav-link{color:#fff;background:rgba(255,255,255,.07)}
+.top .nav-item.active>.nav-link,.top.scrolled .nav-item.active>.nav-link{color:#fff;font-weight:600;background:rgba(255,255,255,.12);box-shadow:inset 0 0 0 1px rgba(255,255,255,.08)}
+.top .nav-item.active>.nav-link::after{content:"";position:absolute;left:50%;bottom:-11px;width:18px;height:2px;margin-left:-9px;border-radius:2px;background:var(--green)}
+.top .nav-link:focus-visible{outline-color:rgba(255,255,255,.4)}
+.top .ib-top,.top.scrolled .ib-top{color:rgba(255,255,255,.8)}
+.top .ib-top:hover,.top.scrolled .ib-top:hover,.top .nt.open .nt-btn{background:rgba(255,255,255,.09);color:#fff}
+.top .um-btn .u-ic,.top.scrolled .um-btn .u-ic{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.24)}
+.top .um-btn:hover .u-ic,.top .um.open .um-btn .u-ic{background:rgba(255,255,255,.18);border-color:rgba(255,255,255,.34)}
+.top .burger,.top.scrolled .burger{color:#fff;border-color:rgba(255,255,255,.2)}
+.top .nt-c,.burger.has-al::after{box-shadow:0 0 0 2px #001d3f}
