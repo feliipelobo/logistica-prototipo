@@ -313,7 +313,7 @@ const NAV = [
   { label: 'Pagamentos', icon: 'wallet', items: [['pag-motorista', 'Pagamento de motoristas', 'Motoristas próprios e agregados', 'user'], ['pag-terceiros', 'Pagamento de terceiros', 'Serviços de prestadores', 'tool'], ['abastecimentos', 'Abastecimentos', 'Combustível por veículo', 'fuel']] },
   { label: 'A receber', icon: 'receipt', items: [['rpas', "RPA's", 'Recebimentos de clientes', 'receipt']] },
   { label: 'Cadastros', icon: 'folder', items: [['motoristas', 'Motorista', 'Equipe própria e agregados', 'user'], ['veiculos', 'Veículo', 'Frota e placas', 'truck'], ['empresas', 'Empresa', 'Clientes atendidos', 'building'], ['terceiros', 'Terceiro', 'Fornecedores e prestadores', 'tool'], ['usuarios', 'Usuário', 'Acessos ao sistema', 'users']] },
-  { label: 'Controle', icon: 'shield', r: 'controle', group: 'Vencimentos', desc: 'IPVA dos veículos e CNH dos motoristas', count: () => alertas().length },
+  { label: 'Controle', icon: 'shield', r: 'controle', group: 'Vencimentos', desc: 'IPVA dos veículos e CNH dos motoristas' },
   { label: 'Dashboard', icon: 'grid', r: 'dashboard', group: 'Visão geral', desc: 'Indicadores em tempo real' }
 ];
 const userIc = (cls = '') => `<span class="u-ic ${cls}"><img src="img/icone-usuario.png" alt=""></span>`;
@@ -363,7 +363,7 @@ function renderNav(route) {
     ? `<div class="nav-item ${on(it) ? 'active' : ''}"><a class="nav-link" href="#/${it.r}">${it.label}${cnt(it)}</a></div>`
     : `<div class="nav-item ${on(it) ? 'active' : ''}"><button class="nav-link" type="button" aria-haspopup="true">${it.label}</button><div class="dd"><div class="dd-in">${it.items.map(simple).join('')}</div></div></div>`).join('');
   $$('#navLinks .dd-s').forEach(a => a.addEventListener('click', () => a.blur()));
-  if ($('#burger')) $('#burger').classList.toggle('has-al', alertas().length > 0);
+  if ($('#burger')) $('#burger').classList.remove('has-al');
   renderNotif();
   $('#mnav').innerHTML = `<div class="mnav-bg" data-close></div><div class="mnav-p"><div class="mnav-h"><div class="brand"><img src="img/logo-simbolo.png" alt="" style="width:32px;height:32px"><div class="wm"><b>SERAFINI</b><span>TRANSPORTES</span></div></div><button data-close aria-label="Fechar menu">${ic('x', 20)}</button></div>
     <div class="mnav-b">${NAV.map(it => it.r ? (it.group ? `<div class="mnav-g">${it.label}</div>` : '') + link([it.r, it.group || it.label, it.desc, it.icon], cnt(it)) : `<div class="mnav-g">${it.label}</div>${it.items.map(i => link(i)).join('')}`).join('')}</div></div>`;
@@ -387,12 +387,6 @@ const ntFechados = new Set();
 function notifs() {
   const out = [];
   alertas().forEach(x => out.push({ g: 'venc', id: `v:${x.key}:${x.sit[2]}`, icon: 'alert', tone: x.sit[2] === 2 ? 'red' : 'warn', title: `${x.doc} ${x.tipo === 'Veículo' ? 'do veículo' : 'de'} ${x.ident}`, msg: `${x.sit[0]} · ${x.venc}`, tag: 'Ver no Controle', go: () => { location.hash = '#/controle'; } }));
-  pendencias(S.progs).slice(0, 5).forEach(x => out.push({ g: 'fin', id: `p:${x.p.id}:${x.tipo}`, icon: x.tipo === 'Receber' ? 'receipt' : 'wallet', tone: 'info', title: x.tipo === 'Receber' ? `A receber de ${x.quem}` : `A pagar para ${x.quem}`, msg: `${brl(x.valor)} · lote ${x.p.lote} · ${x.dias} dia${x.dias === 1 ? '' : 's'} em aberto`, tag: 'Abrir ficha do lote', go: () => progDetail(x.p) }));
-  S.log.filter(l => Date.now() - l.t < 2 * 864e5).slice(0, 14).forEach(l => {
-    const [i, t] = feedIc(l.icon), g = LOG_GRP[l.icon] || 'cad';
-    const href = g === 'pag' ? (l.icon === '🔧' ? '#/pag-terceiros' : '#/pag-motorista') : LOG_GO[g];
-    out.push({ g, id: `l:${l.t}`, icon: i, tone: t, title: l.msg, msg: '', tag: ago(l.t), go: href ? () => { location.hash = href; } : null });
-  });
   return out;
 }
 let notifCache = [], notifNovas = new Set();
@@ -412,8 +406,8 @@ function renderNotif() {
         return `<div class="nt-grp ${ntFechados.has(g) ? 'off' : ''}"><button class="nt-gh" type="button" data-g="${g}" aria-expanded="${!ntFechados.has(g)}">${ic(gic, 14)}<span>${label}</span><em>${its.length}</em>${nv ? `<i>${nv} nova${nv === 1 ? '' : 's'}</i>` : ''}${ic('chev', 15, 'nt-cv')}</button>
           <div class="nt-gb">${its.map(([x, i]) => `<button class="nt-i ${notifNovas.has(x.id) ? 'new' : ''} ${x.go ? '' : 'ro'}" data-n="${i}" type="button"><span class="f-ic t-${x.tone}">${ic(x.icon, 15)}</span><span class="nt-x"><b>${esc(x.title)}</b>${x.msg ? `<small>${esc(x.msg)}</small>` : ''}<em>${esc(x.tag)}</em></span></button>`).join('')}</div></div>`;
       }).join('')
-      : `<div class="nt-e">${ic('check', 18)}<span>Nenhuma notificação no momento.</span></div>`}</div>
-    <a class="nt-f" href="#/dashboard">Ver painel completo</a>`;
+      : `<div class="nt-e">${ic('check', 18)}<span>Nenhum IPVA ou CNH vencido ou perto de vencer.</span></div>`}</div>
+    <a class="nt-f" href="#/controle">Ver controle de vencimentos</a>`;
   $$('#ntDd [data-n]').forEach(b => b.onclick = e => { e.stopPropagation(); const x = notifCache[+b.dataset.n]; if (!x.go) return; $('#nt').classList.remove('open'); x.go(); });
   $('#ntDd .nt-f').onclick = () => $('#nt').classList.remove('open');
   $$('#ntDd [data-g]').forEach(b => b.onclick = e => {
